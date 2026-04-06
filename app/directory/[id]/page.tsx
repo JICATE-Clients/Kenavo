@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -82,6 +83,16 @@ export default async function DirectoryIndividualPage({ params }: { params: Prom
       <div className="flex min-h-[70px] sm:min-h-[80px] md:min-h-[100px] lg:min-h-[120px] xl:min-h-[80px] w-full" />
 
       <main className="w-full flex-grow">
+        {/* Back to Directory link */}
+        <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-0 pt-4 sm:pt-6">
+          <Link
+            href="/directory"
+            className="inline-flex items-center gap-2 text-purple-300 hover:text-white transition-colors mb-6 text-sm"
+          >
+            ← Back to Directory
+          </Link>
+        </div>
+
         {/* Profile Hero Section */}
         <div className="py-4 sm:py-6 md:py-8 lg:py-10 xl:py-8">
           <ProfileHero

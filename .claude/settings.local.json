@@ -87,10 +87,20 @@
       "Bash(python:*)",
       "Skill(frontend-design:frontend-design)",
       "Bash(cmd /c \"taskkill /F /PID 40464\")",
-      "Skill(ui-ux-designer)"
+      "Skill(ui-ux-designer)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"year_graduated\\\\|year graduated\\\\|VARCHAR\\\\|TEXT\\\\|BIGINT\" /c/Users/Admin/Documents/GitHub/Kenavo/supabase/migrations/*.sql)",
+      "Skill(auth-setup)",
+      "Skill(auth-setup:*)",
+      "Bash(rm -f \"c:/Users/Admin/Documents/GitHub/Kenavo/app/directory/page.backup.tsx\")",
+      "Bash(rm -rf \"c:/Users/Admin/Documents/GitHub/Kenavo/app/test-home\")",
+      "Bash(rm -rf \"c:/Users/Admin/Documents/GitHub/Kenavo/app/supabase-demo\")"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "c:\\Users\\Admin\\Documents\\GitHub\\Kenavo\\app\\api\\auth"
+    ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [

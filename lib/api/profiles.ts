@@ -7,10 +7,12 @@ import { createSlug, slugMatchesName } from '../utils/slug'
  * Fetch all profiles from the database
  * @returns Array of all alumni profiles
  */
-export async function getAllProfiles(): Promise<Profile[]> {
+export type ProfileCard = Pick<Profile, 'id' | 'name' | 'profile_image_url' | 'updated_at' | 'location' | 'current_job' | 'designation_organisation' | 'year_graduated' | 'nicknames'>
+
+export async function getAllProfiles(): Promise<ProfileCard[]> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, name, profile_image_url, updated_at, location, current_job, designation_organisation, year_graduated, nicknames')
     .order('name')
 
   if (error) {
@@ -116,6 +118,7 @@ export async function getGraduationYears(): Promise<string[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select('year_graduated')
+    .not('year_graduated', 'is', null)
     .order('year_graduated')
 
   if (error) {
@@ -247,8 +250,16 @@ export async function getProfileBySlug(slug: string): Promise<ProfileWithAnswers
  * @returns Array of objects with slug for each profile
  */
 export async function getAllProfileSlugs(): Promise<{ slug: string }[]> {
-  const profiles = await getAllProfiles()
-  return profiles.map(profile => ({
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('name, username')
+
+  if (error) {
+    console.error('Error fetching profile slugs:', error)
+    throw error
+  }
+
+  return (data || []).map(profile => ({
     slug: createSlug(profile.name)
   }))
 }

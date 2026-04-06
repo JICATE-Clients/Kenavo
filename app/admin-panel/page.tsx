@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, UserPlus, CheckCircle, AlertCircle, Edit2, Search, X, Save, List, LogOut, Image as ImageIcon, RefreshCw, Mail, Users, Sparkles } from 'lucide-react';
+import { Upload, UserPlus, CheckCircle, AlertCircle, Edit2, Search, X, Save, List, LogOut, Image as ImageIcon, RefreshCw, Mail, Users, Sparkles, ShieldCheck, Loader2, KeyRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut } from '@/lib/auth/client';
 import BulkImagePreviewModal, { ImageMapping } from '@/components/admin/BulkImagePreviewModal';
@@ -9,8 +9,9 @@ import GalleryManagementTab from '@/components/admin/GalleryManagementTab';
 import ContactSubmissionsTab from '@/components/ContactSubmissionsTab';
 import UserManagementTab from '@/components/admin/UserManagementTab';
 import AIDocumentsTab from '@/components/admin/AIDocumentsTab';
+import type { Profile } from '@/lib/types/database';
 
-type TabType = 'manage' | 'bulkUpdate' | 'single' | 'gallery' | 'contact' | 'users' | 'ai-documents';
+type TabType = 'manage' | 'bulkUpdate' | 'single' | 'gallery' | 'contact' | 'users' | 'ai-documents' | 'auth-accounts';
 
 // Helper function to parse CSV line (handles quoted values with commas)
 function parseCSVLine(line: string): string[] {
@@ -33,24 +34,6 @@ function parseCSVLine(line: string): string[] {
 
   result.push(current);
   return result;
-}
-
-interface Profile {
-  id: number;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  location: string | null;
-  year_graduated: string | null;
-  current_job: string | null;
-  company: string | null;
-  designation_organisation: string | null;
-  bio: string | null;
-  linkedin_url: string | null;
-  nicknames: string | null;
-  profile_image_url: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 interface QAResponse {
@@ -76,7 +59,7 @@ export default function AdminPanel() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab') as TabType;
-      if (tab && ['manage', 'bulkUpdate', 'single', 'gallery', 'contact', 'users'].includes(tab)) {
+      if (tab && ['manage', 'bulkUpdate', 'single', 'gallery', 'contact', 'users', 'ai-documents', 'auth-accounts'].includes(tab)) {
         return tab;
       }
     }
@@ -169,13 +152,7 @@ export default function AdminPanel() {
                   <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] flex items-center justify-center shadow-xl transform group-hover:scale-110 transition-transform duration-300">
                     <span className="text-white font-black text-2xl tracking-tight">K</span>
                   </div>
-                  {/* Pulse Indicator */}
-                  <div className="absolute -top-1 -right-1">
-                    <span className="relative flex h-4 w-4">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white shadow-lg"></span>
-                    </span>
-                  </div>
+
                 </div>
                 <div className="space-y-1">
                   <h1 className="text-2xl font-black bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] bg-clip-text text-transparent tracking-tight">Kenavo Admin</h1>
@@ -218,7 +195,7 @@ export default function AdminPanel() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
                   )}
                   <List size={18} className="relative z-10" />
-                  <span className="relative z-10 hidden sm:inline">Profiles</span>
+                  <span className="relative z-10">Profiles</span>
                   {activeTab === 'manage' && (
                     <div className="absolute inset-0 rounded-xl bg-white/20 animate-pulse"></div>
                   )}
@@ -235,7 +212,7 @@ export default function AdminPanel() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
                   )}
                   <Upload size={18} className="relative z-10" />
-                  <span className="relative z-10 hidden sm:inline">Import</span>
+                  <span className="relative z-10">Import</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('single')}
@@ -249,7 +226,7 @@ export default function AdminPanel() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
                   )}
                   <UserPlus size={18} className="relative z-10" />
-                  <span className="relative z-10 hidden sm:inline">Create</span>
+                  <span className="relative z-10">Create</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('gallery')}
@@ -263,7 +240,7 @@ export default function AdminPanel() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
                   )}
                   <ImageIcon size={18} className="relative z-10" />
-                  <span className="relative z-10 hidden sm:inline">Gallery</span>
+                  <span className="relative z-10">Gallery</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('contact')}
@@ -277,7 +254,7 @@ export default function AdminPanel() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
                   )}
                   <Mail size={18} className="relative z-10" />
-                  <span className="relative z-10 hidden sm:inline">Messages</span>
+                  <span className="relative z-10">Messages</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('users')}
@@ -291,7 +268,7 @@ export default function AdminPanel() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
                   )}
                   <Users size={18} className="relative z-10" />
-                  <span className="relative z-10 hidden sm:inline">Users</span>
+                  <span className="relative z-10">Users</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('ai-documents')}
@@ -305,7 +282,21 @@ export default function AdminPanel() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
                   )}
                   <Sparkles size={18} className="relative z-10" />
-                  <span className="relative z-10 hidden sm:inline">AI Docs</span>
+                  <span className="relative z-10">AI Docs</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('auth-accounts')}
+                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+                    activeTab === 'auth-accounts'
+                      ? 'text-white'
+                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
+                  }`}
+                >
+                  {activeTab === 'auth-accounts' && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
+                  )}
+                  <ShieldCheck size={18} className="relative z-10" />
+                  <span className="relative z-10">Logins</span>
                 </button>
               </div>
             </div>
@@ -324,6 +315,7 @@ export default function AdminPanel() {
               {activeTab === 'contact' && <ContactSubmissionsTab />}
               {activeTab === 'users' && <UserManagementTab />}
               {activeTab === 'ai-documents' && <AIDocumentsTab />}
+              {activeTab === 'auth-accounts' && <AuthAccountsTab />}
             </div>
           </main>
         </div>
@@ -910,6 +902,11 @@ function BulkUpdateTab() {
   const [slambookLoading, setSlambookLoading] = useState(false);
   const [slambookMessage, setSlambookMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
+  // Email Sync State
+  const [emailSyncFile, setEmailSyncFile] = useState<File | null>(null);
+  const [emailSyncLoading, setEmailSyncLoading] = useState(false);
+  const [emailSyncMessage, setEmailSyncMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);
+
   // Bulk Image Upload State
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
@@ -1040,9 +1037,9 @@ function BulkUpdateTab() {
         try {
           console.log(`Processing profile ${row.id}:`, row);
 
-          // Validate year_graduated length (database constraint: VARCHAR(4))
-          if (row.year_graduated && row.year_graduated.length > 4) {
-            const error = `Profile ID ${row.id}: year_graduated "${row.year_graduated}" exceeds 4 characters. Use format: "2024"`;
+          // Validate year_graduated length (database constraint: VARCHAR(20))
+          if (row.year_graduated && row.year_graduated.length > 20) {
+            const error = `Profile ID ${row.id}: year_graduated "${row.year_graduated}" exceeds 20 characters. Use format: "2024" or "1993-2000"`;
             console.error(error);
             errors.push(error);
             errorCount++;
@@ -1209,6 +1206,37 @@ function BulkUpdateTab() {
       });
     } finally {
       setSlambookLoading(false);
+    }
+  };
+
+  // Email Sync Handlers
+  const handleEmailSyncUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailSyncFile) return;
+    setEmailSyncLoading(true);
+    setEmailSyncMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append('csvFile', emailSyncFile);
+      const response = await fetch('/api/admin/sync-emails-from-csv', { method: 'POST', body: formData });
+      const data = await response.json();
+      if (response.ok) {
+        const { updated, unmatched, matched } = data.summary;
+        let text = `✅ Email sync complete!\n\n📊 ${matched} profiles matched → ${updated} emails updated`;
+        if (unmatched > 0) {
+          text += `\n⚠️ ${unmatched} names from CSV could not be matched to any profile:\n`;
+          data.unmatchedEntries?.slice(0, 5).forEach((u: any) => { text += `  • ${u.csvName} (${u.email})\n`; });
+          if (data.unmatchedEntries?.length > 5) text += `  ... and ${data.unmatchedEntries.length - 5} more`;
+        }
+        setEmailSyncMessage({ type: unmatched > 0 ? 'warning' : 'success', text });
+        setEmailSyncFile(null);
+      } else {
+        setEmailSyncMessage({ type: 'error', text: `❌ ${data.error || 'Sync failed'}` });
+      }
+    } catch {
+      setEmailSyncMessage({ type: 'error', text: '❌ Network error. Please try again.' });
+    } finally {
+      setEmailSyncLoading(false);
     }
   };
 
@@ -1496,6 +1524,53 @@ function BulkUpdateTab() {
                 <Upload size={22} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
                 <span className="relative z-10">Upload & Process Slambook CSV</span>
               </>
+            )}
+          </button>
+        </form>
+      </div>
+
+      {/* ── Email Sync from Slambook CSV ─────────────────────────────────── */}
+      <div className="border-t-2 border-neutral-200 pt-8">
+        <h3 className="text-2xl font-bold text-[#4E2E8C] mb-2">📧 Sync Emails from Slambook CSV</h3>
+        <p className="text-sm text-neutral-500 mb-6">
+          Matches each row by <strong>Full Name</strong> and updates <strong>only email &amp; phone</strong> on the matched profile.
+          No other data is changed. Safe to run multiple times.
+        </p>
+        <form onSubmit={handleEmailSyncUpload} className="space-y-5">
+          <div>
+            <label className="block text-[#4E2E8C] font-semibold mb-2 text-sm">Upload Slambook CSV (Col R = Email)</label>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={e => { const f = e.target.files?.[0]; if (f) { setEmailSyncFile(f); setEmailSyncMessage(null); } }}
+              className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-yellow file:text-[#4E2E8C] file:cursor-pointer hover:file:bg-accent-400 shadow-sm transition-all"
+            />
+            {emailSyncFile && <p className="text-neutral-600 mt-2 text-sm">Selected: {emailSyncFile.name}</p>}
+          </div>
+
+          {emailSyncMessage && (
+            <div className={`flex items-start gap-3 p-4 rounded-xl border-2 shadow-sm ${
+              emailSyncMessage.type === 'success' ? 'bg-green-50 text-green-700 border-green-200'
+              : emailSyncMessage.type === 'warning' ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+              : 'bg-red-50 text-red-700 border-red-200'
+            }`}>
+              {emailSyncMessage.type === 'success'
+                ? <CheckCircle size={20} className="mt-0.5 flex-shrink-0" />
+                : <AlertCircle size={20} className="mt-0.5 flex-shrink-0" />}
+              <span className="whitespace-pre-line text-sm leading-relaxed flex-1">{emailSyncMessage.text}</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={emailSyncLoading || !emailSyncFile}
+            className="group relative w-full bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            {emailSyncLoading ? (
+              <><RefreshCw className="animate-spin relative z-10" size={20} /><span className="relative z-10">Syncing emails...</span></>
+            ) : (
+              <><Upload size={20} className="relative z-10" /><span className="relative z-10">Sync Emails to Profiles</span></>
             )}
           </button>
         </form>
@@ -1800,7 +1875,7 @@ function SingleProfileForm() {
             value={formData.year_graduated}
             onChange={handleInputChange}
             className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
-            placeholder="2010"
+            placeholder="2010 or 1993-2000"
           />
         </div>
 
@@ -1887,6 +1962,338 @@ function SingleProfileForm() {
         <span className="relative z-10">{loading ? 'Creating...' : 'Create Profile'}</span>
       </button>
     </form>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH ACCOUNTS TAB
+// Shows every profile with its login status badge and lets admin create
+// password accounts individually or in bulk for non-Gmail alumni.
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AuthProfile {
+  id: number;
+  name: string;
+  email: string | null;
+  year_graduated: string | null;
+  authStatus: 'gmail' | 'has_login' | 'no_login' | 'no_email';
+}
+
+interface AuthSummary {
+  total: number;
+  gmail: number;
+  has_login: number;
+  no_login: number;
+  no_email: number;
+}
+
+function AuthAccountsTab() {
+  const [profiles, setProfiles] = useState<AuthProfile[]>([]);
+  const [summary, setSummary] = useState<AuthSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [bulkPassword, setBulkPassword] = useState('');
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [individualPasswords, setIndividualPasswords] = useState<Record<number, string>>({});
+  const [individualLoading, setIndividualLoading] = useState<Record<number, boolean>>({});
+  const [individualMessages, setIndividualMessages] = useState<Record<number, { type: 'success' | 'error'; text: string }>>({});
+
+  useEffect(() => {
+    fetchStatus();
+  }, []);
+
+  const fetchStatus = async () => {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const res = await fetch('/api/admin/auth-account-status');
+      const data = await res.json();
+      if (res.ok) {
+        setProfiles(data.profiles ?? []);
+        setSummary(data.summary ?? null);
+      } else {
+        const msg = data?.error ?? `Server error (HTTP ${res.status})`;
+        console.error('auth-account-status API error:', msg);
+        setFetchError(msg);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Network error — could not reach server.';
+      console.error('Failed to load auth status', err);
+      setFetchError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkCreate = async () => {
+    if (!bulkPassword || bulkPassword.length < 6) {
+      setBulkMessage({ type: 'error', text: 'Password must be at least 6 characters.' });
+      return;
+    }
+
+    setBulkLoading(true);
+    setBulkMessage(null);
+
+    try {
+      const res = await fetch('/api/admin/bulk-create-auth-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: bulkPassword }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setBulkMessage({
+          type: 'success',
+          text: `Created ${data.summary.created} accounts. ${data.summary.skippedGmail} Gmail (Google OAuth). ${data.summary.skippedAlreadyExists} already existed. ${data.summary.failed} failed.`,
+        });
+        setBulkPassword('');
+        await fetchStatus(); // Refresh status badges
+      } else {
+        setBulkMessage({ type: 'error', text: data.error || 'Bulk create failed.' });
+      }
+    } catch {
+      setBulkMessage({ type: 'error', text: 'Network error.' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleIndividualCreate = async (profile: AuthProfile) => {
+    const password = individualPasswords[profile.id];
+    if (!password || password.length < 6) {
+      setIndividualMessages(prev => ({
+        ...prev,
+        [profile.id]: { type: 'error', text: 'Password must be at least 6 characters.' },
+      }));
+      return;
+    }
+
+    setIndividualLoading(prev => ({ ...prev, [profile.id]: true }));
+    setIndividualMessages(prev => {
+      const next = { ...prev };
+      delete next[profile.id];
+      return next;
+    });
+
+    try {
+      const res = await fetch('/api/admin/create-auth-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: profile.email, password, profileId: profile.id }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setIndividualMessages(prev => ({
+          ...prev,
+          [profile.id]: { type: 'success', text: 'Login account created.' },
+        }));
+        setIndividualPasswords(prev => {
+          const next = { ...prev };
+          delete next[profile.id];
+          return next;
+        });
+        await fetchStatus();
+      } else {
+        setIndividualMessages(prev => ({
+          ...prev,
+          [profile.id]: { type: 'error', text: data.error || 'Failed.' },
+        }));
+      }
+    } catch {
+      setIndividualMessages(prev => ({
+        ...prev,
+        [profile.id]: { type: 'error', text: 'Network error.' },
+      }));
+    } finally {
+      setIndividualLoading(prev => ({ ...prev, [profile.id]: false }));
+    }
+  };
+
+  const statusBadge = (status: AuthProfile['authStatus']) => {
+    switch (status) {
+      case 'gmail':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Google OAuth</span>;
+      case 'has_login':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700"><CheckCircle size={12} /> Has Login</span>;
+      case 'no_login':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700"><AlertCircle size={12} /> No Login</span>;
+      case 'no_email':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">No Email</span>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={36} className="animate-spin text-[#4E2E8C]" />
+        <span className="ml-3 text-[#4E2E8C] font-semibold">Loading login status...</span>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <div className="flex items-center gap-3 bg-red-50 border-2 border-red-200 rounded-xl px-6 py-4 max-w-lg w-full">
+          <AlertCircle size={22} className="text-red-600 shrink-0" />
+          <div className="flex-1">
+            <p className="font-bold text-red-700 text-sm">Failed to load login status</p>
+            <p className="text-red-600 text-xs mt-1 font-mono break-all">{fetchError}</p>
+          </div>
+        </div>
+        <button
+          onClick={fetchStatus}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-neutral-200 text-neutral-600 hover:border-[#4E2E8C] hover:text-[#4E2E8C] transition-all text-sm font-semibold"
+        >
+          <RefreshCw size={16} />
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-6 border-b-2 border-neutral-200">
+        <div>
+          <h2 className="text-2xl font-bold text-[#4E2E8C] tracking-tight">Login Account Management</h2>
+          <p className="text-neutral-600 text-sm mt-1">
+            Gmail alumni use Google OAuth. Non-Gmail alumni need a password account created here.
+          </p>
+        </div>
+        <button
+          onClick={fetchStatus}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-neutral-200 text-neutral-600 hover:border-[#4E2E8C] hover:text-[#4E2E8C] transition-all text-sm font-semibold"
+        >
+          <RefreshCw size={16} />
+          Refresh
+        </button>
+      </div>
+
+      {/* Summary Cards */}
+      {summary && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-blue-700">{summary.gmail}</p>
+            <p className="text-xs font-semibold text-blue-600 mt-1">Google OAuth</p>
+          </div>
+          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-green-700">{summary.has_login}</p>
+            <p className="text-xs font-semibold text-green-600 mt-1">Has Password Login</p>
+          </div>
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-red-700">{summary.no_login}</p>
+            <p className="text-xs font-semibold text-red-600 mt-1">Need Login Created</p>
+          </div>
+          <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-gray-600">{summary.no_email}</p>
+            <p className="text-xs font-semibold text-gray-500 mt-1">No Email on File</p>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Create Section */}
+      {summary && summary.no_login > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <KeyRound size={20} className="text-amber-700" />
+            <h3 className="font-bold text-amber-800">Bulk Create Accounts ({summary.no_login} needed)</h3>
+          </div>
+          <p className="text-sm text-amber-700">
+            Creates password accounts for all non-Gmail alumni who don&apos;t have one yet. All accounts get the same password — alumni can change it later.
+          </p>
+          <div className="flex items-center gap-3">
+            <input
+              type="password"
+              value={bulkPassword}
+              onChange={e => setBulkPassword(e.target.value)}
+              placeholder="Set password for all accounts..."
+              className="flex-1 px-4 py-2.5 rounded-lg border-2 border-amber-300 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-500 text-sm"
+            />
+            <button
+              onClick={handleBulkCreate}
+              disabled={bulkLoading}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-sm transition-all whitespace-nowrap"
+            >
+              {bulkLoading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+              {bulkLoading ? 'Creating...' : 'Create All'}
+            </button>
+          </div>
+          {bulkMessage && (
+            <div className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
+              bulkMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {bulkMessage.type === 'success' ? <CheckCircle size={16} className="mt-0.5 shrink-0" /> : <AlertCircle size={16} className="mt-0.5 shrink-0" />}
+              <span>{bulkMessage.text}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Per-Profile Table */}
+      <div className="overflow-x-auto rounded-2xl border-2 border-neutral-200">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-neutral-100 border-b-2 border-neutral-200">
+              <th className="text-left px-4 py-3 font-bold text-neutral-700">Name</th>
+              <th className="text-left px-4 py-3 font-bold text-neutral-700 hidden md:table-cell">Email</th>
+              <th className="text-left px-4 py-3 font-bold text-neutral-700 hidden sm:table-cell">Batch</th>
+              <th className="text-left px-4 py-3 font-bold text-neutral-700">Status</th>
+              <th className="text-left px-4 py-3 font-bold text-neutral-700">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {profiles.map((profile, i) => (
+              <tr key={profile.id} className={`border-b border-neutral-100 ${i % 2 === 0 ? 'bg-white' : 'bg-neutral-50/50'}`}>
+                <td className="px-4 py-3 font-semibold text-neutral-800">{profile.name}</td>
+                <td className="px-4 py-3 text-neutral-600 hidden md:table-cell">{profile.email ?? '—'}</td>
+                <td className="px-4 py-3 text-neutral-500 hidden sm:table-cell">{profile.year_graduated ?? '—'}</td>
+                <td className="px-4 py-3">{statusBadge(profile.authStatus)}</td>
+                <td className="px-4 py-3">
+                  {profile.authStatus === 'no_login' && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        placeholder="Password..."
+                        value={individualPasswords[profile.id] ?? ''}
+                        onChange={e => setIndividualPasswords(prev => ({ ...prev, [profile.id]: e.target.value }))}
+                        className="w-32 px-2.5 py-1.5 rounded-lg border-2 border-neutral-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#4E2E8C] text-xs"
+                      />
+                      <button
+                        onClick={() => handleIndividualCreate(profile)}
+                        disabled={individualLoading[profile.id]}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#4E2E8C] hover:bg-[#6D28D9] disabled:opacity-50 text-white font-semibold text-xs transition-all whitespace-nowrap"
+                      >
+                        {individualLoading[profile.id] ? <Loader2 size={12} className="animate-spin" /> : <KeyRound size={12} />}
+                        Create
+                      </button>
+                      {individualMessages[profile.id] && (
+                        <span className={`text-xs font-medium ${individualMessages[profile.id].type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                          {individualMessages[profile.id].text}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {profile.authStatus === 'gmail' && (
+                    <span className="text-xs text-neutral-400 italic">Uses Google sign-in</span>
+                  )}
+                  {profile.authStatus === 'has_login' && (
+                    <span className="text-xs text-green-600 font-medium">Can log in</span>
+                  )}
+                  {profile.authStatus === 'no_email' && (
+                    <span className="text-xs text-neutral-400 italic">Add email first</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

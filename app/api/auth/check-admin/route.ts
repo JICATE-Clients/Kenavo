@@ -33,12 +33,8 @@ export async function GET(request: NextRequest) {
     if (!adminStatus) {
       return NextResponse.json(
         {
-          authorized: false,
-          message: 'Access denied. You do not have admin privileges.',
-          user: {
-            email: userEmail,
-            id: user.id
-          }
+          error: 'Forbidden',
+          message: 'Admin access required'
         },
         { status: 403 }
       );

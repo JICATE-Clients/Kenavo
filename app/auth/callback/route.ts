@@ -73,25 +73,18 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL('/update-password', request.url));
       }
 
-      // Check if user email is authorized for admin access
       const userEmail = data.user?.email || '';
       const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
-
-      console.log('Checking admin access...');
-      console.log('User email:', userEmail);
-      console.log('Admin emails:', adminEmails);
-
       const isAdmin = adminEmails.includes(userEmail);
 
-      if (!isAdmin) {
-        console.log('❌ Access denied - user not in admin whitelist');
-        // Sign out the user
-        await supabase.auth.signOut();
-        return NextResponse.redirect(new URL('/login?error=access_denied', request.url));
+      if (isAdmin) {
+        console.log('✅ Admin - redirecting to admin panel');
+        return NextResponse.redirect(new URL('/admin-panel', request.url));
       }
 
-      console.log('✅ Admin access granted - redirecting to admin panel');
-      return NextResponse.redirect(new URL('/admin-panel', request.url));
+      // Non-admin users go to directory (they still need directory access)
+      console.log('✅ Regular user - redirecting to directory');
+      return NextResponse.redirect(new URL('/directory', request.url));
 
     } catch (error: any) {
       console.error('❌ Code exchange error:', error);

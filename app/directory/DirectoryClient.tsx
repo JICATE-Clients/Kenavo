@@ -1,13 +1,13 @@
 'use client';
 
 import React, { Suspense, useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import DirectoryHeroSection from '@/components/DirectoryHeroSection';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { getAllProfiles } from '@/lib/api/profiles';
-import type { Profile } from '@/lib/types/database';
+import type { ProfileCard as Profile } from '@/lib/api/profiles';
 import { DirectorySearch } from '@/components/directory/DirectorySearch';
 import { DirectoryFilters } from '@/components/directory/DirectoryFilters';
 import { HorizontalFilters } from '@/components/directory/HorizontalFilters';
@@ -18,11 +18,7 @@ import { useProfileFilters } from '@/hooks/useProfileFilters';
 import { Button } from '@/components/ui/button';
 import { Filter, X } from 'lucide-react';
 import { FloatingAlphabetNav } from '@/components/directory/FloatingAlphabetNav';
-
-// Helper function to create slug from name
-const createSlug = (name: string) => {
-  return name.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '');
-};
+import { createSlug } from '@/lib/utils/slug';
 
 // Group alumni by first letter
 const groupByLetter = (profiles: Profile[]) => {
@@ -37,14 +33,93 @@ const groupByLetter = (profiles: Profile[]) => {
   return groups;
 };
 
-function DirectoryPageContent() {
-  const router = useRouter();
+// Add cache-busting parameter to force fresh image load
+const getImageUrl = (url: string | null, profileId: number, updatedAt: string | null) => {
+  if (!url) return '/placeholder-profile.svg';
+  const separator = url.includes('?') ? '&' : '?';
+  const cacheBuster = updatedAt ? new Date(updatedAt).getTime() : profileId;
+  return `${url}${separator}t=${cacheBuster}`;
+};
+
+// AlphabetNavigation is defined outside component so React can memoize it properly
+const AlphabetNavigation = ({ letters }: { letters: string[] }) => {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+  return (
+    <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 self-stretch mt-8 sm:mt-10 md:mt-12 lg:mt-[51px]">
+      {alphabet.map((letter) => {
+        const hasProfiles = letters.includes(letter);
+        return (
+          <div key={letter} className="inline-block">
+            {hasProfiles ? (
+              <a
+                href={`#letter-${letter}`}
+                className="text-[rgba(217,65,66,1)] hover:text-[rgba(217,65,66,0.8)] transition-colors text-base sm:text-lg md:text-xl lg:text-2xl font-normal inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-2"
+              >
+                {letter}
+              </a>
+            ) : (
+              <span className="opacity-50 text-base sm:text-lg md:text-xl lg:text-2xl font-normal inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-2 text-[rgba(254,249,232,1)]">
+                {letter}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ProfileCard is defined outside component so React can memoize it properly
+const ProfileCard = ({ profile }: { profile: Profile }) => {
+  const slug = createSlug(profile.name);
+  const imageUrl = getImageUrl(profile.profile_image_url, profile.id, profile.updated_at);
+  const isPlaceholder = !profile.profile_image_url;
+
+  return (
+    <article className="bg-[rgba(44,23,82,1)] flex grow flex-col font-normal w-full px-4 sm:px-5 py-5 sm:py-6 max-md:mt-6">
+      <div className="aspect-[0.97] w-full self-stretch rounded-sm bg-[rgba(78,46,140,0.4)] overflow-hidden relative">
+        {isPlaceholder ? (
+          <Image
+            src="/placeholder-profile.svg"
+            width={200}
+            height={200}
+            className="w-full h-full object-cover"
+            alt={`${profile.name} profile`}
+          />
+        ) : (
+          <Image
+            src={imageUrl}
+            width={200}
+            height={200}
+            className="w-full h-full object-cover"
+            alt={`${profile.name} profile`}
+          />
+        )}
+      </div>
+      <div className="text-[rgba(254,249,232,1)] text-base sm:text-lg md:text-xl lg:text-[24px] leading-[1.3] mt-4 sm:mt-5">
+        {profile.name}
+      </div>
+      <Link
+        href={`/directory/${slug}`}
+        className="text-[rgba(217,81,100,1)] text-sm sm:text-base leading-none underline mt-5 sm:mt-6 md:mt-8 lg:mt-10 text-left hover:text-[rgba(217,81,100,0.8)] transition-colors inline-block"
+      >
+        View More
+      </Link>
+    </article>
+  );
+};
+
+interface DirectoryPageContentProps {
+  profiles: Profile[];
+  fetchError?: string | null;
+}
+
+function DirectoryPageContent({ profiles: initialProfiles, fetchError }: DirectoryPageContentProps) {
   const searchParams = useSearchParams();
 
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [profiles] = useState<Profile[]>(initialProfiles);
+  const [error] = useState<string | null>(fetchError ?? null);
 
   // Search state
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
@@ -53,32 +128,12 @@ function DirectoryPageContent() {
   // Mobile filter drawer state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Fetch profiles from Supabase (auth already checked server-side)
-  useEffect(() => {
-    async function loadProfiles() {
-      try {
-        setLoading(true);
-        const data = await getAllProfiles();
-        setProfiles(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load profiles');
-        console.error('Error loading profiles:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadProfiles();
-  }, [refreshKey]);
-
-  // Check for refresh parameter in URL and trigger refetch
+  // Check for refresh parameter in URL (kept for compatibility — full page nav will re-run server fetch)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const refreshParam = params.get('refresh');
       if (refreshParam) {
-        // Trigger refetch by updating refresh key
-        setRefreshKey(prev => prev + 1);
         // Remove refresh parameter from URL without page reload
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
@@ -123,85 +178,6 @@ function DirectoryPageContent() {
   const letters = Object.keys(alumniByLetter).sort();
 
   const hasActiveSearchOrFilters = searchHook.isSearching || filterHook.hasActiveFilters;
-
-  const AlphabetNavigation = () => {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-    return (
-      <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 self-stretch mt-8 sm:mt-10 md:mt-12 lg:mt-[51px]">
-        {alphabet.map((letter) => {
-          const hasProfiles = letters.includes(letter);
-          return (
-            <div key={letter} className="inline-block">
-              {hasProfiles ? (
-                <a
-                  href={`#letter-${letter}`}
-                  className="text-[rgba(217,65,66,1)] hover:text-[rgba(217,65,66,0.8)] transition-colors text-base sm:text-lg md:text-xl lg:text-2xl font-normal inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-2"
-                >
-                  {letter}
-                </a>
-              ) : (
-                <span className="opacity-50 text-base sm:text-lg md:text-xl lg:text-2xl font-normal inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-2 text-[rgba(254,249,232,1)]">
-                  {letter}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const ProfileCard = ({ profile }: { profile: Profile }) => {
-    const slug = createSlug(profile.name);
-
-    // Add cache-busting parameter to force fresh image load
-    const getImageUrl = (url: string | null) => {
-      if (!url) return '/placeholder-profile.svg';
-      // Add timestamp or updated_at to bust cache
-      const separator = url.includes('?') ? '&' : '?';
-      const cacheBuster = profile.updated_at ? new Date(profile.updated_at).getTime() : Date.now();
-      return `${url}${separator}t=${cacheBuster}`;
-    };
-
-    return (
-      <article className="bg-[rgba(44,23,82,1)] flex grow flex-col font-normal w-full px-4 sm:px-5 py-5 sm:py-6 max-md:mt-6">
-        <div className="aspect-[0.97] w-full self-stretch rounded-sm bg-[rgba(78,46,140,0.4)] overflow-hidden">
-          <img
-            src={getImageUrl(profile.profile_image_url)}
-            className="w-full h-full object-contain"
-            alt={`${profile.name} profile`}
-          />
-        </div>
-        <div className="text-[rgba(254,249,232,1)] text-base sm:text-lg md:text-xl lg:text-[24px] leading-[1.3] mt-4 sm:mt-5">
-          {profile.name}
-        </div>
-        <Link
-          href={`/directory/${slug}`}
-          className="text-[rgba(217,81,100,1)] text-sm sm:text-base leading-none underline mt-5 sm:mt-6 md:mt-8 lg:mt-10 text-left hover:text-[rgba(217,81,100,0.8)] transition-colors inline-block"
-        >
-          View More
-        </Link>
-      </article>
-    );
-  };
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="bg-[rgba(64,34,120,1)] flex flex-col overflow-hidden items-stretch min-h-screen">
-        <Header />
-        <DirectoryHeroSection />
-        <main className="w-full max-w-[1011px] mx-auto flex flex-col mt-12 md:mt-16 px-5 sm:px-8 md:px-10">
-          <div className="text-[rgba(254,249,232,1)] text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[rgba(217,81,100,1)] mx-auto mb-4"></div>
-            <p className="text-2xl">Loading alumni directory...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   // Error state
   if (error) {
@@ -379,7 +355,7 @@ function DirectoryPageContent() {
         </div>
 
         {/* Alphabet Navigation */}
-        {finalProfiles.length > 0 && <AlphabetNavigation />}
+        {finalProfiles.length > 0 && <AlphabetNavigation letters={letters} />}
 
         {/* All sections A-Z */}
         {letters.map((letter, letterIndex) => (
@@ -408,7 +384,12 @@ function DirectoryPageContent() {
   );
 }
 
-export default function DirectoryClient() {
+interface DirectoryClientProps {
+  profiles: Profile[];
+  fetchError?: string | null;
+}
+
+export default function DirectoryClient({ profiles, fetchError }: DirectoryClientProps) {
   return (
     <Suspense fallback={
       <div className="bg-[rgba(64,34,120,1)] flex flex-col overflow-hidden items-stretch min-h-screen">
@@ -423,7 +404,7 @@ export default function DirectoryClient() {
         <Footer />
       </div>
     }>
-      <DirectoryPageContent />
+      <DirectoryPageContent profiles={profiles} fetchError={fetchError} />
     </Suspense>
   );
 }

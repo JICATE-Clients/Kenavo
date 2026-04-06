@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Profile } from '@/lib/types/database';
+import type { ProfileCard as Profile } from '@/lib/api/profiles';
 
 export interface FilterState {
   cities: string[];

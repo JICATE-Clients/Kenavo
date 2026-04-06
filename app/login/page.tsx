@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LogIn, AlertCircle, CheckCircle, Loader2, Mail, Lock } from 'lucide-react';
-import { signInWithPassword, getUser, signOut } from '@/lib/auth/client';
+import { signInWithGoogle, getUser } from '@/lib/auth/client';
 // import Link from 'next/link';
 
 // Separate component that uses useSearchParams
@@ -70,132 +70,87 @@ function LoginContent() {
     }
   };
 
-  // GOOGLE SIGN-IN DISABLED
-  // const handleGoogleSignIn = async () => {
-  //   setLoading(true);
-  //   setMessage({
-  //     type: 'info',
-  //     text: 'Redirecting to Google...',
-  //   });
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setMessage({
+      type: 'info',
+      text: 'Redirecting to Google...',
+    });
 
-  //   try {
-  //     console.log('Starting Google sign-in...');
-  //     const { error } = await signInWithGoogle();
+    try {
+      console.log('Starting Google sign-in...');
+      const { error } = await signInWithGoogle();
 
-  //     if (error) {
-  //       console.error('Google sign-in error:', error);
-  //       setMessage({
-  //         type: 'error',
-  //         text: `Failed to sign in with Google: ${error.message}`,
-  //       });
-  //       setLoading(false);
-  //       return;
-  //     }
+      if (error) {
+        console.error('Google sign-in error:', error);
+        setMessage({
+          type: 'error',
+          text: `Failed to sign in with Google: ${error.message}`,
+        });
+        setLoading(false);
+        return;
+      }
 
-  //     // If no error, user will be redirected to Google
-  //     // They'll come back via the auth callback
-  //   } catch (error: any) {
-  //     console.error('Unexpected Google sign-in error:', error);
-  //     setMessage({
-  //       type: 'error',
-  //       text: `Error: ${error.message || 'An unexpected error occurred'}`,
-  //     });
-  //     setLoading(false);
-  //   }
-  // };
+      // If no error, user will be redirected to Google
+      // They'll come back via the auth callback
+    } catch (error: any) {
+      console.error('Unexpected Google sign-in error:', error);
+      setMessage({
+        type: 'error',
+        text: `Error: ${error.message || 'An unexpected error occurred'}`,
+      });
+      setLoading(false);
+    }
+  };
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
     if (!email || !password) {
-      setMessage({
-        type: 'error',
-        text: 'Please enter both email and password',
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      setMessage({
-        type: 'error',
-        text: 'Password must be at least 6 characters',
-      });
+      setMessage({ type: 'error', text: 'Please enter both email and password' });
       return;
     }
 
     setEmailLoading(true);
-    setMessage({
-      type: 'info',
-      text: 'Signing in...',
-    });
+    setMessage({ type: 'info', text: 'Signing in...' });
 
     try {
-      console.log('Starting email sign-in...');
-      const { data, error } = await signInWithPassword(email, password);
+      // Route auth through server API to avoid browser CORS/firewall issues
+      // The server calls Supabase and sets the session cookie server-side
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (error) {
-        console.error('Email sign-in error:', error);
+      const result = await response.json();
+
+      if (!response.ok) {
         setMessage({
           type: 'error',
-          text: error.message === 'Invalid login credentials'
+          text: result.error === 'Invalid login credentials'
             ? 'Invalid email or password'
-            : `Failed to sign in: ${error.message}`,
+            : result.error || 'Sign in failed',
         });
         setEmailLoading(false);
         return;
       }
 
-      console.log('✅ Signed in successfully!');
-
-      // Check for redirect parameter
       const redirectUrl = searchParams?.get('redirect');
 
-      // Check if user is admin or regular user
-      const authCheckResponse = await fetch('/api/auth/check-admin');
-      const authResult = await authCheckResponse.json();
-
-      if (authResult.authorized && !redirectUrl) {
-        console.log('✅ Admin user - redirecting to admin panel');
-        setMessage({
-          type: 'success',
-          text: 'Admin access granted! Redirecting...',
-        });
-
-        // Redirect to admin panel
-        setTimeout(() => {
-          router.push('/admin-panel');
-        }, 1000);
-      } else if (redirectUrl) {
-        console.log('✅ Redirecting to intended page:', redirectUrl);
-        setMessage({
-          type: 'success',
-          text: 'Signed in successfully! Redirecting...',
-        });
-
-        // Redirect to the intended page
-        setTimeout(() => {
-          router.push(redirectUrl);
-        }, 1000);
+      if (redirectUrl) {
+        setMessage({ type: 'success', text: 'Signed in! Redirecting...' });
+        setTimeout(() => router.push(redirectUrl), 800);
+      } else if (result.isAdmin) {
+        setMessage({ type: 'success', text: 'Admin access granted! Redirecting...' });
+        setTimeout(() => router.push('/admin-panel'), 800);
       } else {
-        console.log('✅ Regular user - redirecting to directory');
-        setMessage({
-          type: 'success',
-          text: 'Signed in successfully! Redirecting to directory...',
-        });
-
-        // Redirect to directory page
-        setTimeout(() => {
-          router.push('/directory');
-        }, 1000);
+        setMessage({ type: 'success', text: 'Signed in successfully! Redirecting...' });
+        setTimeout(() => router.push('/directory'), 800);
       }
 
     } catch (error: any) {
-      console.error('Unexpected email sign-in error:', error);
-      setMessage({
-        type: 'error',
-        text: `Error: ${error.message || 'An unexpected error occurred'}`,
-      });
+      setMessage({ type: 'error', text: 'Network error — please try again.' });
       setEmailLoading(false);
     }
   };
@@ -234,11 +189,11 @@ function LoginContent() {
             </div>
           )}
 
-          {/* GOOGLE SIGN-IN DISABLED */}
-          {/* <button
+          {/* Google Sign-In */}
+          <button
             onClick={handleGoogleSignIn}
             disabled={loading || emailLoading}
-            className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-300 text-gray-900 px-8 py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed shadow-lg"
+            className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-300 text-gray-900 px-8 py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed shadow-lg"
           >
             {loading ? (
               <>
@@ -268,17 +223,17 @@ function LoginContent() {
                 Sign in with Google
               </>
             )}
-          </button> */}
+          </button>
 
-          {/* DIVIDER REMOVED - Email sign-in only */}
-          {/* <div className="relative my-6">
+          {/* Divider */}
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-white/20"></div>
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-white/10 text-purple-200">Or continue with email</span>
             </div>
-          </div> */}
+          </div>
 
           {/* Email/Password Form */}
           <form onSubmit={handleEmailSignIn} className="space-y-4">
@@ -336,7 +291,7 @@ function LoginContent() {
             <button
               type="submit"
               disabled={loading || emailLoading}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white px-8 py-3 rounded-full font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed shadow-lg disabled:opacity-50"
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed shadow-lg disabled:opacity-50"
             >
               {emailLoading ? (
                 <>
@@ -365,18 +320,12 @@ function LoginContent() {
           {/* Info Text */}
           <div className="mt-6 pt-6 border-t border-white/20">
             <p className="text-purple-200 text-sm text-center">
-              Sign in with your credentials to access the alumni directory.
+              Sign in with Google or your email credentials to access the alumni directory.
             </p>
           </div>
         </div>
 
-        {/* Helper Info */}
-        <div className="mt-6 bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 text-blue-100 text-sm">
-          <p className="font-semibold mb-2">🔐 Authentication</p>
-          <p>
-            Sign in with your email and password. Admins will be redirected to the admin panel, while regular users can access the directory.
-          </p>
-        </div>
+
       </div>
     </div>
   );

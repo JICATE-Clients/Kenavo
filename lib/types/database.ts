@@ -8,6 +8,7 @@ export interface Profile {
   location: string | null
   year_graduated: string | null
   current_job: string | null
+  company: string | null
   designation_organisation: string | null
   bio: string | null
   email: string | null

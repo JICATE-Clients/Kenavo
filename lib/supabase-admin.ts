@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { validateSupabaseEnv } from './validate-env';
+import { fetchWithTimeout } from './supabase-fetch';
 
 // Validate environment variables on module load (server-side only)
 if (typeof window === 'undefined') {
@@ -28,6 +29,7 @@ export const supabaseAdmin = createClient(
     auth: {
       autoRefreshToken: false,
       persistSession: false
-    }
+    },
+    global: { fetch: fetchWithTimeout }
   }
 );

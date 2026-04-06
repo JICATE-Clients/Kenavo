@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { fetchWithTimeout } from '@/lib/supabase-fetch';
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -27,6 +28,7 @@ export async function createClient() {
           }
         },
       },
+      global: { fetch: fetchWithTimeout },
     }
   );
 }

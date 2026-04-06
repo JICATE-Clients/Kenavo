@@ -98,7 +98,7 @@ export async function PUT(
 
     // Update auth user if email or password changed
     if (email || password) {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       if (email) updateData.email = email;
       if (password) updateData.password = password;
 
@@ -131,7 +131,7 @@ export async function PUT(
     }
 
     // Build update object for app_users table
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (email !== undefined) updateData.email = email;
     if (username !== undefined) updateData.username = username;
     if (role !== undefined) updateData.role = role;

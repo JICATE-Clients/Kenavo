@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Profile } from '@/lib/types/database';
+import type { ProfileCard as Profile } from '@/lib/api/profiles';
 
 export interface SearchOptions {
   searchFields?: ('name' | 'location' | 'current_job' | 'designation_organisation' | 'nicknames')[];

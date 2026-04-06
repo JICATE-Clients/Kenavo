@@ -27,17 +27,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    // Validate year_graduated length (database constraint: VARCHAR(4))
-    if (year_graduated && year_graduated.length > 4) {
+    // Validate year_graduated length (database constraint: VARCHAR(20))
+    if (year_graduated && year_graduated.length > 20) {
       return NextResponse.json({
-        error: `Year graduated "${year_graduated}" exceeds 4 characters. Please use format: "2024"`
+        error: `Year graduated "${year_graduated}" exceeds 20 characters. Please use format: "2024" or "1993-2000"`
       }, { status: 400 });
     }
 
     let profile_image_url = null;
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
     // Upload image to Supabase Storage if provided
     if (imageFile) {
+      if (imageFile.size > MAX_FILE_SIZE) {
+        return NextResponse.json({ error: 'File too large. Maximum size is 5MB.' }, { status: 400 });
+      }
+      if (!ALLOWED_TYPES.includes(imageFile.type)) {
+        return NextResponse.json({ error: 'Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.' }, { status: 400 });
+      }
       const fileExt = imageFile.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `profiles/${fileName}`;

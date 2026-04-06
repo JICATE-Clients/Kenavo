@@ -21,6 +21,8 @@ interface SlambookRow {
   tenure: string;
   designationOrganisation: string;
   answers: string[]; // 10 Q&A answers
+  email: string;     // Col R (index 17)
+  phone: string;     // Col S (index 18)
 }
 
 // Parse CSV content - FIXED to handle multiline quoted fields correctly
@@ -122,11 +124,11 @@ function parseSlambookData(rows: string[][]): SlambookRow[] {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
 
-    // Need at least 17 columns (6 profile + 10 Q&A + 1 serial number)
+    // Need at least 17 columns (1 serial + 6 profile + 10 Q&A); email/phone at 17-18 are optional
     if (row.length < 17) continue;
 
     // Remove quotes from values
-    const cleanValue = (val: string) => val.replace(/^"|"$/g, '').trim();
+    const cleanValue = (val: string) => val?.replace(/^"|"$/g, '').trim() ?? '';
 
     const slambookRow: SlambookRow = {
       rowNumber: i,
@@ -148,6 +150,8 @@ function parseSlambookData(rows: string[][]): SlambookRow[] {
         cleanValue(row[15]) || '', // Q9
         cleanValue(row[16]) || '', // Q10
       ],
+      email: cleanValue(row[17]) || '', // Col R - Email
+      phone: cleanValue(row[18]) || '', // Col S - Phone Number
     };
 
     // Only add if has a name
@@ -358,13 +362,15 @@ export async function POST(request: NextRequest) {
       // ENHANCED: Use multi-level matching
       const matchResult = findBestMatch(row.name, yearGraduated, existingProfileMap);
 
-      const profileData = {
+      const profileData: Record<string, string> = {
         name: row.name.trim(), // Keep original name but trimmed
         nicknames: row.nickname,
         location: row.location,
         current_job: row.currentJob,
         year_graduated: yearGraduated,
         designation_organisation: row.designationOrganisation,
+        ...(row.email ? { email: row.email } : {}),
+        ...(row.phone ? { phone: row.phone } : {}),
       };
 
       // Track match type for statistics
