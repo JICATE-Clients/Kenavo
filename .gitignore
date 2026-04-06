@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Claude Code local settings (may contain secrets/paths)
+.claude/settings.local.json
+
+# CSV data files (may contain personal data)
+*.csv
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
