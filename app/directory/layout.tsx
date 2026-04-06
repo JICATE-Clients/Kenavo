@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { getUser, isAdmin } from '@/lib/auth/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+export const maxDuration = 30; // Allow up to 30s on Vercel Pro (ignored on Hobby)
+
 export default async function DirectoryLayout({
   children,
 }: {
