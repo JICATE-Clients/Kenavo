@@ -104,6 +104,21 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`✅ Created account for ${profile.email} (${profile.name})`);
         results.created.push({ profileId: profile.id, name: profile.name, email: profile.email, password });
+
+        // Also create app_users row so the user can access the directory
+        const { error: appUserError } = await supabaseAdmin
+          .from('app_users')
+          .upsert({
+            id: data.user.id,
+            email: profile.email,
+            role: 'user',
+            has_directory_access: true,
+            status: 'active',
+          }, { onConflict: 'id' });
+
+        if (appUserError) {
+          console.warn(`⚠️ app_users insert failed for ${profile.email}:`, appUserError.message);
+        }
       }
     }
 

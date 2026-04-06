@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 /**
  * AUTH CALLBACK ROUTE
@@ -82,7 +83,28 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL('/admin-panel', request.url));
       }
 
-      // Non-admin users go to directory (they still need directory access)
+      // Auto-provision app_users row if it doesn't exist yet
+      // This covers Gmail/Google OAuth users and anyone not created via bulk-create
+      if (data.user?.id) {
+        const { data: existing } = await supabaseAdmin
+          .from('app_users')
+          .select('id')
+          .eq('id', data.user.id)
+          .single();
+
+        if (!existing) {
+          await supabaseAdmin.from('app_users').insert({
+            id: data.user.id,
+            email: userEmail,
+            role: 'user',
+            has_directory_access: true,
+            status: 'active',
+          });
+          console.log(`✅ Auto-provisioned app_users for ${userEmail}`);
+        }
+      }
+
+      // Non-admin users go to directory
       console.log('✅ Regular user - redirecting to directory');
       return NextResponse.redirect(new URL('/directory', request.url));
 
