@@ -2,7 +2,7 @@
 
 import { BugReporterProvider } from '@boobalan_jkkn/bug-reporter-sdk';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/client';
 
 /**
  * Validates if the Bug Reporter API URL is properly configured for the SDK
@@ -63,7 +63,7 @@ export function BugReporterWrapper({
 
   useEffect(() => {
     // Fetch user for context
-    supabase.auth.getUser().then(({ data }) => {
+    createClient().auth.getUser().then(({ data }) => {
       setUser(data.user);
     });
 
