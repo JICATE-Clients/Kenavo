@@ -252,7 +252,7 @@ export async function getProfileBySlug(slug: string): Promise<ProfileWithAnswers
 export async function getAllProfileSlugs(): Promise<{ slug: string }[]> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('name, username')
+    .select('name')
 
   if (error) {
     console.error('Error fetching profile slugs:', error)
