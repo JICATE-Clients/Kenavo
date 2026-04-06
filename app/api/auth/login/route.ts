@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 /**
  * POST /api/auth/login
@@ -79,6 +80,26 @@ export async function POST(request: NextRequest) {
     // Determine role for redirect hint
     const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
     const isAdmin = adminEmails.includes(data.user?.email || '');
+
+    // Auto-provision app_users row for email/password logins (non-admin)
+    if (!isAdmin && data.user?.id) {
+      const { data: existing } = await supabaseAdmin
+        .from('app_users')
+        .select('id')
+        .eq('id', data.user.id)
+        .single();
+
+      if (!existing) {
+        await supabaseAdmin.from('app_users').insert({
+          id: data.user.id,
+          email: data.user.email ?? '',
+          role: 'user',
+          has_directory_access: true,
+          status: 'active',
+        });
+        console.log(`✅ Auto-provisioned app_users for ${data.user.email}`);
+      }
+    }
 
     return NextResponse.json({
       success: true,

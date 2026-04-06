@@ -32,8 +32,21 @@ export default async function DirectoryLayout({
       .single();
 
     if (error) {
+      // PGRST116 = row not found — user authenticated but has no app_users row yet.
+      // Auto-provision them instead of denying access (covers email/password logins
+      // that bypass the OAuth callback where provisioning normally happens).
+      if (error.code === 'PGRST116') {
+        await supabaseAdmin.from('app_users').insert({
+          id: user.id,
+          email: user.email ?? '',
+          role: 'user',
+          has_directory_access: true,
+          status: 'active',
+        });
+        console.log(`✅ Auto-provisioned app_users for ${user.email}`);
+        return <>{children}</>;
+      }
       console.error('Error checking directory access:', error);
-      // If user doesn't exist in app_users table, deny access
       redirect('/access-denied?reason=no_permission');
     }
 
