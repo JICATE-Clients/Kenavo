@@ -50,8 +50,15 @@ export default async function DirectoryLayout({
     // User has directory access
     return <>{children}</>;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in directory layout:', error);
-    redirect('/access-denied?reason=error');
+    // Network timeout reaching Supabase — do not silently deny access.
+    // Re-throw so Next.js renders a 500 page (or add a specific UI here).
+    // Redirecting to access-denied on a transient DB error wrongly locks out valid users.
+    if (error?.name === 'AbortError' || error?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
+      throw new Error('Database unreachable — please refresh the page.');
+    }
+    // Genuine unexpected error — still re-throw rather than silently deny.
+    throw error;
   }
 }
