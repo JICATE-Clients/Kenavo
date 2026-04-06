@@ -1998,6 +1998,27 @@ function AuthAccountsTab() {
   const [individualPasswords, setIndividualPasswords] = useState<Record<number, string>>({});
   const [individualLoading, setIndividualLoading] = useState<Record<number, boolean>>({});
   const [individualMessages, setIndividualMessages] = useState<Record<number, { type: 'success' | 'error'; text: string }>>({});
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillMessage, setBackfillMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleBackfill = async () => {
+    setBackfillLoading(true);
+    setBackfillMessage(null);
+    try {
+      const res = await fetch('/api/admin/backfill-app-users', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setBackfillMessage({ type: 'error', text: data.error ?? 'Backfill failed' });
+      } else {
+        setBackfillMessage({ type: 'success', text: data.message });
+        fetchStatus();
+      }
+    } catch {
+      setBackfillMessage({ type: 'error', text: 'Network error during backfill' });
+    } finally {
+      setBackfillLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchStatus();
@@ -2165,14 +2186,34 @@ function AuthAccountsTab() {
             Gmail alumni use Google OAuth. Non-Gmail alumni need a password account created here.
           </p>
         </div>
-        <button
-          onClick={fetchStatus}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-neutral-200 text-neutral-600 hover:border-[#4E2E8C] hover:text-[#4E2E8C] transition-all text-sm font-semibold"
-        >
-          <RefreshCw size={16} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchStatus}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-neutral-200 text-neutral-600 hover:border-[#4E2E8C] hover:text-[#4E2E8C] transition-all text-sm font-semibold"
+          >
+            <RefreshCw size={16} />
+            Refresh
+          </button>
+          <button
+            onClick={handleBackfill}
+            disabled={backfillLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4E2E8C] hover:bg-[#3d2370] disabled:opacity-50 text-white transition-all text-sm font-semibold"
+          >
+            {backfillLoading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+            {backfillLoading ? 'Granting...' : 'Grant All Access'}
+          </button>
+        </div>
       </div>
+
+      {/* Backfill result message */}
+      {backfillMessage && (
+        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm font-medium ${
+          backfillMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'
+        }`}>
+          {backfillMessage.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+          {backfillMessage.text}
+        </div>
+      )}
 
       {/* Summary Cards */}
       {summary && (
