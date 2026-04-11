@@ -81,23 +81,37 @@ export async function POST(request: NextRequest) {
     const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
     const isAdmin = adminEmails.includes(data.user?.email || '');
 
-    // Auto-provision app_users row for email/password logins (non-admin)
+    // Auto-provision app_users row for email/password logins (non-admin).
+    // Best-effort: a failure here must NOT fail the login response, because
+    // signInWithPassword above already succeeded and the session cookie is set.
+    // On Vercel Hobby a cold-start supabaseAdmin round-trip can exceed the 8s
+    // fetchWithTimeout and throw AbortError — swallow it and let the client
+    // proceed. The directory no longer enforces has_directory_access for
+    // viewing, so a missing app_users row is non-blocking.
     if (!isAdmin && data.user?.id) {
-      const { data: existing } = await supabaseAdmin
-        .from('app_users')
-        .select('id')
-        .eq('id', data.user.id)
-        .single();
+      try {
+        const { data: existing } = await supabaseAdmin
+          .from('app_users')
+          .select('id')
+          .eq('id', data.user.id)
+          .maybeSingle();
 
-      if (!existing) {
-        await supabaseAdmin.from('app_users').insert({
-          id: data.user.id,
-          email: data.user.email ?? '',
-          role: 'user',
-          has_directory_access: true,
-          status: 'active',
-        });
-        console.log(`✅ Auto-provisioned app_users for ${data.user.email}`);
+        if (!existing) {
+          const { error: insertError } = await supabaseAdmin.from('app_users').insert({
+            id: data.user.id,
+            email: data.user.email ?? '',
+            role: 'user',
+            has_directory_access: true,
+            status: 'active',
+          });
+          if (insertError) {
+            console.warn(`⚠️ app_users auto-provision insert failed for ${data.user.email}:`, insertError.message);
+          } else {
+            console.log(`✅ Auto-provisioned app_users for ${data.user.email}`);
+          }
+        }
+      } catch (provisionErr: any) {
+        console.warn(`⚠️ app_users auto-provision skipped for ${data.user.email}:`, provisionErr?.message ?? provisionErr);
       }
     }
 

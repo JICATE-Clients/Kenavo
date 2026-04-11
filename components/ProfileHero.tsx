@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { addCacheBuster } from '@/lib/utils/image-cache-buster';
 
 interface ProfileHeroProps {
@@ -148,28 +149,52 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
               </div>
             )}
 
-            {/* Contact — visible only to authenticated users
-                TODO(learning-mode): fill in the Contact block. Render ONLY when
-                  isAuthenticated && (email || phone)
-                Suggested structure (match the existing card styling above — same
-                bg/border/padding/label-color classes for visual consistency):
-                  1. A label "CONTACT" in the red-accent color
-                  2. A mailto: link for email (if present)
-                  3. A tel: link for phone (if present)
-                Copy and iconography are your call — they set the tone for how the
-                directory surfaces contact info to logged-in alumni. */}
+            {/* Contact — visible only to authenticated users */}
+            {isAuthenticated && (email || phone) && (
+              <div className="bg-[rgba(255,255,255,0.05)] backdrop-blur-sm rounded-lg p-4 sm:p-5 md:p-6 lg:p-7 xl:p-5 border border-[rgba(217,81,100,0.2)]">
+                <div className="text-[rgba(217,81,100,1)] text-xs sm:text-sm md:text-base lg:text-[17px] font-medium uppercase tracking-wide mb-2 sm:mb-2.5 md:mb-3">
+                  Contact
+                </div>
+                <div className="space-y-2 sm:space-y-2.5">
+                  {email && (
+                    <a
+                      href={`mailto:${email}`}
+                      className="block text-white text-base sm:text-lg md:text-xl lg:text-[22px] xl:text-[20px] font-medium leading-tight break-all hover:text-[rgba(217,81,100,1)] transition-colors"
+                    >
+                      {email}
+                    </a>
+                  )}
+                  {phone && (
+                    <a
+                      href={`tel:${phone}`}
+                      className="block text-white text-base sm:text-lg md:text-xl lg:text-[22px] xl:text-[20px] font-medium leading-tight hover:text-[rgba(217,81,100,1)] transition-colors"
+                    >
+                      {phone}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
 
-            {/* Anon CTA — visible only to unauthenticated visitors who are
-                missing at least one gated field
-                TODO(learning-mode): fill in the anon CTA. Render ONLY when
-                  !isAuthenticated && (location || email || phone)
-                Should include a Link to `/login?redirect=/directory/${slug}` so
-                logging in returns the visitor to this profile. Copy and styling
-                are your call — this is the main conversion moment for public
-                visitors, so make it inviting without feeling like a paywall.
-                Note: when you add the Link, re-add `import Link from 'next/link';`
-                at the top of this file — it was removed to avoid an unused-import
-                lint error while the block is empty. */}
+            {/* Anon CTA — visible only to unauthenticated visitors who have at
+                least one gated field. The dashed border distinguishes a "locked"
+                section from the filled information cards above. */}
+            {!isAuthenticated && (location || email || phone) && (
+              <div className="bg-[rgba(255,255,255,0.03)] backdrop-blur-sm rounded-lg p-4 sm:p-5 md:p-6 lg:p-7 xl:p-5 border border-dashed border-[rgba(217,81,100,0.4)]">
+                <div className="text-[rgba(217,81,100,1)] text-xs sm:text-sm md:text-base lg:text-[17px] font-medium uppercase tracking-wide mb-2 sm:mb-2.5 md:mb-3">
+                  Contact &amp; Location
+                </div>
+                <p className="text-[rgba(254,249,232,0.8)] text-sm sm:text-base md:text-lg leading-relaxed mb-4">
+                  Log in to view contact details and location for this alumnus.
+                </p>
+                <Link
+                  href={`/login?redirect=/directory/${slug}`}
+                  className="inline-flex items-center justify-center px-5 py-2.5 bg-[rgba(217,81,100,1)] hover:bg-[rgba(217,65,66,0.9)] text-white text-sm sm:text-base font-semibold rounded-md transition-colors"
+                >
+                  Log in to view
+                </Link>
+              </div>
+            )}
 
             {/* Nicknames */}
             {nicknames && (

@@ -2000,6 +2000,12 @@ function AuthAccountsTab() {
   const [individualMessages, setIndividualMessages] = useState<Record<number, { type: 'success' | 'error'; text: string }>>({});
   const [backfillLoading, setBackfillLoading] = useState(false);
   const [backfillMessage, setBackfillMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [bulkResetPassword, setBulkResetPassword] = useState('');
+  const [bulkResetLoading, setBulkResetLoading] = useState(false);
+  const [bulkResetMessage, setBulkResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [individualResetPasswords, setIndividualResetPasswords] = useState<Record<number, string>>({});
+  const [individualResetLoading, setIndividualResetLoading] = useState<Record<number, boolean>>({});
+  const [individualResetMessages, setIndividualResetMessages] = useState<Record<number, { type: 'success' | 'error'; text: string }>>({});
 
   const handleBackfill = async () => {
     setBackfillLoading(true);
@@ -2130,6 +2136,87 @@ function AuthAccountsTab() {
       }));
     } finally {
       setIndividualLoading(prev => ({ ...prev, [profile.id]: false }));
+    }
+  };
+
+  const handleBulkReset = async () => {
+    if (!bulkResetPassword || bulkResetPassword.length < 6) {
+      setBulkResetMessage({ type: 'error', text: 'Password must be at least 6 characters.' });
+      return;
+    }
+    if (!window.confirm('This will reset passwords for every non-admin user. Continue?')) {
+      return;
+    }
+    setBulkResetLoading(true);
+    setBulkResetMessage(null);
+    try {
+      const res = await fetch('/api/admin/bulk-reset-passwords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: bulkResetPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBulkResetMessage({
+          type: 'success',
+          text: `Reset ${data.summary.reset} passwords. Skipped ${data.summary.skippedAdmin} admin(s). ${data.summary.failed} failed.`,
+        });
+        setBulkResetPassword('');
+      } else {
+        setBulkResetMessage({ type: 'error', text: data.error || 'Bulk reset failed.' });
+      }
+    } catch {
+      setBulkResetMessage({ type: 'error', text: 'Network error.' });
+    } finally {
+      setBulkResetLoading(false);
+    }
+  };
+
+  const handleIndividualReset = async (profile: AuthProfile) => {
+    const password = individualResetPasswords[profile.id];
+    if (!password || password.length < 6) {
+      setIndividualResetMessages(prev => ({
+        ...prev,
+        [profile.id]: { type: 'error', text: 'Password must be at least 6 characters.' },
+      }));
+      return;
+    }
+    setIndividualResetLoading(prev => ({ ...prev, [profile.id]: true }));
+    setIndividualResetMessages(prev => {
+      const next = { ...prev };
+      delete next[profile.id];
+      return next;
+    });
+    try {
+      const res = await fetch('/api/admin/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: profile.email, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setIndividualResetMessages(prev => ({
+          ...prev,
+          [profile.id]: { type: 'success', text: 'Password reset.' },
+        }));
+        setIndividualResetPasswords(prev => {
+          const next = { ...prev };
+          delete next[profile.id];
+          return next;
+        });
+      } else {
+        setIndividualResetMessages(prev => ({
+          ...prev,
+          [profile.id]: { type: 'error', text: data.error || 'Reset failed.' },
+        }));
+      }
+    } catch {
+      setIndividualResetMessages(prev => ({
+        ...prev,
+        [profile.id]: { type: 'error', text: 'Network error.' },
+      }));
+    } finally {
+      setIndividualResetLoading(prev => ({ ...prev, [profile.id]: false }));
     }
   };
 
@@ -2275,6 +2362,42 @@ function AuthAccountsTab() {
         </div>
       )}
 
+      {/* Bulk Password Reset Section (destructive) */}
+      <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <AlertCircle size={20} className="text-red-700" />
+          <h3 className="font-bold text-red-800">Bulk Password Reset</h3>
+        </div>
+        <p className="text-sm text-red-700">
+          Reset the password for every non-admin user to the value below. This is destructive — users will need the new password to log in.
+        </p>
+        <div className="flex items-center gap-3">
+          <input
+            type="password"
+            value={bulkResetPassword}
+            onChange={e => setBulkResetPassword(e.target.value)}
+            placeholder="New password for all non-admin users..."
+            className="flex-1 px-4 py-2.5 rounded-lg border-2 border-red-300 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-red-500 text-sm"
+          />
+          <button
+            onClick={handleBulkReset}
+            disabled={bulkResetLoading}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-sm transition-all whitespace-nowrap"
+          >
+            {bulkResetLoading ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
+            {bulkResetLoading ? 'Resetting...' : 'Reset ALL passwords'}
+          </button>
+        </div>
+        {bulkResetMessage && (
+          <div className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
+            bulkResetMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
+            {bulkResetMessage.type === 'success' ? <CheckCircle size={16} className="mt-0.5 shrink-0" /> : <AlertCircle size={16} className="mt-0.5 shrink-0" />}
+            <span>{bulkResetMessage.text}</span>
+          </div>
+        )}
+      </div>
+
       {/* Per-Profile Table */}
       <div className="overflow-x-auto rounded-2xl border-2 border-neutral-200">
         <table className="w-full text-sm">
@@ -2323,7 +2446,29 @@ function AuthAccountsTab() {
                     <span className="text-xs text-neutral-400 italic">Uses Google sign-in</span>
                   )}
                   {profile.authStatus === 'has_login' && (
-                    <span className="text-xs text-green-600 font-medium">Can log in</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-green-600 font-medium">Can log in</span>
+                      <input
+                        type="password"
+                        placeholder="New password..."
+                        value={individualResetPasswords[profile.id] ?? ''}
+                        onChange={e => setIndividualResetPasswords(prev => ({ ...prev, [profile.id]: e.target.value }))}
+                        className="w-32 px-2.5 py-1.5 rounded-lg border-2 border-red-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-red-500 text-xs"
+                      />
+                      <button
+                        onClick={() => handleIndividualReset(profile)}
+                        disabled={individualResetLoading[profile.id]}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-xs transition-all whitespace-nowrap"
+                      >
+                        {individualResetLoading[profile.id] ? <Loader2 size={12} className="animate-spin" /> : <KeyRound size={12} />}
+                        Reset
+                      </button>
+                      {individualResetMessages[profile.id] && (
+                        <span className={`text-xs font-medium ${individualResetMessages[profile.id].type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                          {individualResetMessages[profile.id].text}
+                        </span>
+                      )}
+                    </div>
                   )}
                   {profile.authStatus === 'no_email' && (
                     <span className="text-xs text-neutral-400 italic">Add email first</span>
