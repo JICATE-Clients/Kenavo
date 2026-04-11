@@ -1,67 +1,21 @@
 import React from 'react';
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProfileHero from '@/components/ProfileHero';
 import QuestionAnswer from '@/components/QuestionAnswer';
-import { getProfileBySlug, getAllProfileSlugs } from '@/lib/api/profiles';
+import { getProfileBySlug } from '@/lib/api/profiles';
 import { getUser } from '@/lib/auth/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 
-// Enable automatic revalidation every hour to ensure fresh data from database
-// This ensures designation/organization and other profile updates appear on production
-// Balances performance (static generation) with data freshness (hourly updates)
-export const revalidate = 3600; // Revalidate every hour (3600 seconds)
-
-// Generate static paths for ALL 134 profiles
-export async function generateStaticParams() {
-  try {
-    const slugs = await getAllProfileSlugs();
-    return slugs.map(({ slug }) => ({ id: slug }));
-  } catch (error) {
-    console.error('Error generating static params:', error);
-    return [];
-  }
-}
-
-// Allow dynamic routes for any other profile IDs at runtime
-export const dynamicParams = true;
+export const dynamic = 'force-dynamic';
 
 export default async function DirectoryIndividualPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: slug } = await params;
 
-  // Check authentication and directory access
   const { user } = await getUser();
+  const isAuthenticated = !!user;
 
-  if (!user) {
-    // Not authenticated - redirect to login with return URL
-    redirect(`/login?redirect=/directory/${slug}`);
-  }
-
-  // Check if user has directory access
-  const { data: appUser, error: userError } = await supabaseAdmin
-    .from('app_users')
-    .select('id, email, username, has_directory_access, status')
-    .eq('id', user.id)
-    .single();
-
-  if (userError || !appUser) {
-    // User not found in app_users table - redirect to login for registration
-    redirect(`/login?redirect=/directory/${slug}`);
-  }
-
-  // Check if account is active
-  if (appUser.status !== 'active') {
-    redirect('/access-denied?reason=account_inactive');
-  }
-
-  // Check directory access permission
-  if (!appUser.has_directory_access) {
-    redirect('/access-denied?reason=directory_access_denied');
-  }
-
-  // Fetch profile data by slug
   let profile;
   try {
     profile = await getProfileBySlug(slug);
@@ -104,6 +58,10 @@ export default async function DirectoryIndividualPage({ params }: { params: Prom
             location={profile.location}
             nicknames={profile.nicknames}
             updatedAt={profile.updated_at}
+            email={profile.email}
+            phone={profile.phone}
+            isAuthenticated={isAuthenticated}
+            slug={slug}
           />
         </div>
 

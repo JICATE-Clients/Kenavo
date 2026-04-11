@@ -10,6 +10,10 @@ interface ProfileHeroProps {
   location: string | null;
   nicknames: string | null;
   updatedAt: string;
+  email: string | null;
+  phone: string | null;
+  isAuthenticated: boolean;
+  slug: string;
 }
 
 const ProfileHero: React.FC<ProfileHeroProps> = ({
@@ -20,7 +24,11 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
   currentJob,
   location,
   nicknames,
-  updatedAt
+  updatedAt,
+  email,
+  phone,
+  isAuthenticated,
+  slug,
 }) => {
   // Format name for display (split into two lines if long)
   const formatName = (fullName: string) => {
@@ -123,10 +131,8 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
               );
             })()}
 
-            {/* Current Residential Address - HIDDEN FOR PRIVACY */}
-            {/* Temporarily commented out as per client request for privacy protection */}
-            {/*
-            {location && (
+            {/* Current Location — visible only to authenticated users */}
+            {isAuthenticated && location && (
               <div className="bg-[rgba(255,255,255,0.05)] backdrop-blur-sm rounded-lg p-4 sm:p-5 md:p-6 lg:p-7 xl:p-5 border border-[rgba(217,81,100,0.2)]">
                 <div className="text-[rgba(217,81,100,1)] text-xs sm:text-sm md:text-base lg:text-[17px] font-medium uppercase tracking-wide mb-2 sm:mb-2.5 md:mb-3">
                   Current Location
@@ -141,7 +147,29 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
                 </address>
               </div>
             )}
-            */}
+
+            {/* Contact — visible only to authenticated users
+                TODO(learning-mode): fill in the Contact block. Render ONLY when
+                  isAuthenticated && (email || phone)
+                Suggested structure (match the existing card styling above — same
+                bg/border/padding/label-color classes for visual consistency):
+                  1. A label "CONTACT" in the red-accent color
+                  2. A mailto: link for email (if present)
+                  3. A tel: link for phone (if present)
+                Copy and iconography are your call — they set the tone for how the
+                directory surfaces contact info to logged-in alumni. */}
+
+            {/* Anon CTA — visible only to unauthenticated visitors who are
+                missing at least one gated field
+                TODO(learning-mode): fill in the anon CTA. Render ONLY when
+                  !isAuthenticated && (location || email || phone)
+                Should include a Link to `/login?redirect=/directory/${slug}` so
+                logging in returns the visitor to this profile. Copy and styling
+                are your call — this is the main conversion moment for public
+                visitors, so make it inviting without feeling like a paywall.
+                Note: when you add the Link, re-add `import Link from 'next/link';`
+                at the top of this file — it was removed to avoid an unused-import
+                lint error while the block is empty. */}
 
             {/* Nicknames */}
             {nicknames && (
