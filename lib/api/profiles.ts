@@ -184,13 +184,13 @@ export async function getProfileBySlug(slug: string): Promise<ProfileWithAnswers
   // Example: "a-s-syed-ahamed-khan" searches for profiles containing these words
   // Then use slugMatchesName() to find the exact match
 
-  const searchTerms = slug.split('-').filter(term => term.length > 1)
+  const searchTerms = slug.split('-').filter(term => term.length > 0)
   if (searchTerms.length === 0) return null
 
   // Build OR query for partial matches
   // This finds all profiles that contain ANY of the search terms
   const orQuery = searchTerms.map(term => `name.ilike.%${term}%`).join(',')
-  const { data: profiles, error: profileError } = await supabase
+  let { data: profiles, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .or(orQuery)
@@ -201,7 +201,24 @@ export async function getProfileBySlug(slug: string): Promise<ProfileWithAnswers
   }
 
   if (!profiles || profiles.length === 0) {
-    return null
+    // Fallback: ilike search can miss names with special characters (e.g., "R.Rangaraj")
+    // because the slug strips characters the DB name retains, creating a mismatch.
+    // Fall back to fetching all profiles and matching by slug comparison.
+    const { data: allProfiles, error: fallbackError } = await supabase
+      .from('profiles')
+      .select('*')
+
+    if (fallbackError || !allProfiles || allProfiles.length === 0) {
+      return null
+    }
+
+    const fallbackMatch = allProfiles.filter(p => slugMatchesName(slug, p.name))
+    if (fallbackMatch.length === 0) {
+      console.warn(`No slug match found for: ${slug}`)
+      return null
+    }
+
+    profiles = fallbackMatch
   }
 
   // Find exact match by comparing generated slugs
