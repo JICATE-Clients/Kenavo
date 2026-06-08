@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Filter, X } from 'lucide-react';
 import { FloatingAlphabetNav } from '@/components/directory/FloatingAlphabetNav';
 import { createSlug } from '@/lib/utils/slug';
+import { getPhotoPosition } from '@/lib/utils/photoPositions';
 
 // Group alumni by first letter
 const groupByLetter = (profiles: Profile[]) => {
@@ -75,6 +76,7 @@ const ProfileCard = ({ profile }: { profile: Profile }) => {
   const slug = createSlug(profile.name);
   const imageUrl = getImageUrl(profile.profile_image_url, profile.id, profile.updated_at);
   const isPlaceholder = !profile.profile_image_url;
+  const objectPosition = getPhotoPosition(slug);
 
   return (
     <article className="bg-[rgba(44,23,82,1)] flex grow flex-col font-normal w-full px-4 sm:px-5 py-5 sm:py-6 max-md:mt-6">
@@ -93,6 +95,7 @@ const ProfileCard = ({ profile }: { profile: Profile }) => {
             width={200}
             height={200}
             className="w-full h-full object-cover"
+            style={{ objectPosition }}
             alt={`${profile.name} profile`}
           />
         )}

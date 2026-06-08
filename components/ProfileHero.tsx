@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { addCacheBuster } from '@/lib/utils/image-cache-buster';
+import { getPhotoPosition } from '@/lib/utils/photoPositions';
 
 interface ProfileHeroProps {
   name: string;
@@ -45,6 +46,7 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
 
   const nameLines = formatName(name);
   const imageUrl = addCacheBuster(profileImageUrl || '/placeholder-profile.svg', updatedAt);
+  const objectPosition = getPhotoPosition(slug);
 
   return (
     <section className="self-center flex w-full max-w-[1200px] flex-col px-4 sm:px-6 md:px-8 lg:px-10 xl:px-0">
@@ -67,7 +69,8 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
               <img
                 src={imageUrl}
                 alt={`${name} Profile`}
-                className="aspect-[0.95] object-cover object-center w-full h-full"
+                className="aspect-[0.95] object-cover w-full h-full"
+                style={{ objectPosition }}
                 loading="eager"
               />
             </div>

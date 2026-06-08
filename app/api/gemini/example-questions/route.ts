@@ -1,89 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { generateExampleQuestions, isRagStoreAccessible } from '@/lib/gemini/service';
+import { generateExampleQuestions } from '@/lib/gemini/service';
+import { generateDataDrivenQuestions } from '@/lib/alumni/smartSearch';
+
+const FALLBACK_QUESTIONS = [
+  "Who's working in tech these days?",
+  "Any alumni in Chennai?",
+  "Tell me about the class of 2000",
+  "What are classmates doing now?",
+  "How many alumni are in the directory?",
+  "Who's working abroad?",
+];
 
 /**
  * GET /api/gemini/example-questions
- * Get AI-generated example questions based on uploaded documents
+ *
+ * Tries Gemini AI to generate contextual questions from alumni data.
+ * Falls back to data-driven questions (no AI) when Gemini is unavailable.
+ * Always returns 200 — the widget should always show suggestions.
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    // Get active RAG Store - fetch all completed documents
-    const { data: completedDocs } = await supabaseAdmin
-      .from('gemini_documents')
-      .select('id, rag_store_name')
-      .eq('upload_status', 'completed')
-      .not('rag_store_name', 'is', null)
-      .order('created_at', { ascending: false });
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('name, location, current_job, designation_organisation, year_graduated')
+      .order('name')
+      .limit(40);
 
-    if (!completedDocs || completedDocs.length === 0) {
-      return NextResponse.json({
-        questions: [
-          "Who's in the alumni directory?",
-          "Tell me about classmates working in tech",
-          "Any alumni in my area?",
-          "What are people up to these days?"
-        ]
-      });
-    }
+    const safeProfiles = profiles || [];
 
-    // Find the first accessible RAG store
-    let accessibleRagStore: string | null = null;
-    for (const doc of completedDocs) {
-      if (doc.rag_store_name) {
-        const isAccessible = await isRagStoreAccessible(doc.rag_store_name);
-        if (isAccessible) {
-          accessibleRagStore = doc.rag_store_name;
-          break;
+    // Try Gemini first (better, more varied questions)
+    if (safeProfiles.length > 0) {
+      try {
+        const sampleContext = safeProfiles.map(p => {
+          const parts: string[] = [p.name];
+          if (p.current_job) parts.push(p.current_job);
+          if (p.designation_organisation) parts.push(p.designation_organisation);
+          if (p.location) parts.push(p.location);
+          return parts.join(' | ');
+        }).join('\n');
+
+        const aiQuestions = await generateExampleQuestions(sampleContext);
+        if (aiQuestions.length > 0) {
+          return NextResponse.json({ questions: aiQuestions.slice(0, 6) });
         }
+      } catch {
+        // Gemini unavailable — fall through to data-driven questions
+      }
+
+      // Generate questions directly from data (no AI needed)
+      const dataQuestions = generateDataDrivenQuestions(
+        safeProfiles.map(p => ({
+          name: p.name,
+          location: p.location,
+          current_job: p.current_job,
+          designation_organisation: p.designation_organisation,
+          year_graduated: p.year_graduated,
+          nicknames: null,
+        }))
+      );
+
+      if (dataQuestions.length > 0) {
+        return NextResponse.json({ questions: dataQuestions });
       }
     }
 
-    if (!accessibleRagStore) {
-      return NextResponse.json({
-        questions: [
-          "Who's in the alumni directory?",
-          "Tell me about classmates working in tech",
-          "Any alumni in my area?",
-          "What are people up to these days?"
-        ]
-      });
-    }
-
-    // Generate questions using Gemini
-    const questions = await generateExampleQuestions(accessibleRagStore);
-
-    // Fallback questions if generation fails
-    if (!questions || questions.length === 0) {
-      return NextResponse.json({
-        questions: [
-          "Who's working in tech these days?",
-          "Tell me about classmates in medicine",
-          "Any alumni in my city?",
-          "What are people doing now?",
-          "Who's working abroad?",
-          "Tell me about someone interesting"
-        ]
-      });
-    }
-
-    return NextResponse.json({
-      questions: questions.slice(0, 6) // Return max 6 questions
-    });
+    return NextResponse.json({ questions: FALLBACK_QUESTIONS });
 
   } catch (error) {
-    console.error('Error generating example questions:', error);
-
-    // Return fallback questions on error
-    return NextResponse.json({
-      questions: [
-        "Who's working in tech these days?",
-        "Tell me about classmates in medicine",
-        "Any alumni in my city?",
-        "What are people doing now?",
-        "Who's working abroad?",
-        "Tell me about someone interesting"
-      ]
-    });
+    console.error('Error in example-questions:', error);
+    return NextResponse.json({ questions: FALLBACK_QUESTIONS });
   }
 }

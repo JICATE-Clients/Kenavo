@@ -77,12 +77,10 @@ export default function KenavoAIChatWidget() {
       const data = await response.json();
 
       if (response.ok) {
-        // Update session ID if new
         if (data.sessionId && !sessionId) {
           setSessionId(data.sessionId);
         }
 
-        // Add AI response
         const aiMessage: ChatMessage = {
           role: 'model',
           parts: [{ text: data.response }],
@@ -90,18 +88,17 @@ export default function KenavoAIChatWidget() {
         };
         setMessages(prev => [...prev, aiMessage]);
       } else {
-        // Handle specific error cases
-        let errorText = data.error || 'Please try again.';
+        let errorText = data.error || "I'm having trouble responding right now. Please try again.";
 
-        // Special handling for quota/rate limit errors
         if (response.status === 429) {
-          errorText = '⚠️ The AI service is temporarily busy. Please wait a few minutes and try again.\n\nThis usually happens when there are too many requests. The service will be available again shortly.';
+          errorText = "I'm a little busy right now — too many people asking at once! Give me a minute and try again.";
+        } else if (response.status === 500) {
+          errorText = "Something went wrong on my end. Please try again in a moment.";
         }
 
-        // Add error message
         const errorMessage: ChatMessage = {
           role: 'model',
-          parts: [{ text: `Sorry, ${errorText}` }],
+          parts: [{ text: errorText }],
         };
         setMessages(prev => [...prev, errorMessage]);
       }
@@ -109,7 +106,7 @@ export default function KenavoAIChatWidget() {
       console.error('Error sending message:', error);
       const errorMessage: ChatMessage = {
         role: 'model',
-        parts: [{ text: 'Sorry, I\'m having trouble connecting. Please try again later.' }],
+        parts: [{ text: "I'm having trouble connecting right now. Please check your connection and try again." }],
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

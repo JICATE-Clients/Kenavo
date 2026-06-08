@@ -1,151 +1,137 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { chatWithDocuments, isRagStoreAccessible } from '@/lib/gemini/service';
+import { chatWithContext } from '@/lib/gemini/service';
+import { buildSmartResponse } from '@/lib/alumni/smartSearch';
 import type { ChatRequest, ChatMessage } from '@/lib/types/database';
 import { v4 as uuidv4 } from 'uuid';
 
+type ProfileRow = {
+  name: string;
+  location: string | null;
+  current_job: string | null;
+  designation_organisation: string | null;
+  year_graduated: string | null;
+  nicknames: string | null;
+};
+
+function buildAlumniContext(profiles: ProfileRow[]): string {
+  return profiles.map(p => {
+    const parts: string[] = [p.name];
+    if (p.current_job && p.designation_organisation) parts.push(`${p.current_job} at ${p.designation_organisation}`);
+    else if (p.current_job) parts.push(p.current_job);
+    else if (p.designation_organisation) parts.push(p.designation_organisation);
+    if (p.location) parts.push(p.location);
+    if (p.year_graduated) parts.push(`Class of ${p.year_graduated}`);
+    if (p.nicknames) parts.push(`aka ${p.nicknames}`);
+    return parts.join(' | ');
+  }).join('\n');
+}
+
+/** Returns true when the error is a permanent API-level block (not transient). */
+function isPermanentBlock(err: any): boolean {
+  const status = err?.status ?? err?.error?.code;
+  const msg = err?.message?.toLowerCase() ?? '';
+  return (
+    status === 403 ||
+    msg.includes('permission_denied') ||
+    msg.includes('denied access') ||
+    msg.includes('api key')
+  );
+}
+
 /**
  * POST /api/gemini/chat
- * Public endpoint for chatting with documents
+ *
+ * Flow:
+ *  1. Fetch all alumni profiles from Supabase.
+ *  2. Try Gemini AI with alumni context injected into the system prompt.
+ *  3. If Gemini returns a permanent 403 (project blocked / key invalid),
+ *     fall back to the smart keyword-search response — zero AI needed.
+ *  4. Save both turns to chat history and return the response.
  */
 export async function POST(request: NextRequest) {
   try {
     const body: ChatRequest = await request.json();
     const { message, sessionId } = body;
 
-    if (!message || message.trim().length === 0) {
+    if (!message?.trim()) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Get or create session ID
     const currentSessionId = sessionId || uuidv4();
 
-    // Get active RAG Store - fetch all completed documents
-    const { data: completedDocs } = await supabaseAdmin
-      .from('gemini_documents')
-      .select('id, rag_store_name')
-      .eq('upload_status', 'completed')
-      .not('rag_store_name', 'is', null)
-      .order('created_at', { ascending: false });
+    // ── 1. Fetch alumni profiles ───────────────────────────────────────────
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('name, location, current_job, designation_organisation, year_graduated, nicknames')
+      .order('name');
 
-    if (!completedDocs || completedDocs.length === 0) {
-      return NextResponse.json({
-        error: 'No documents available. Please upload documents first.',
-      }, { status: 404 });
-    }
+    const safeProfiles: ProfileRow[] = profiles || [];
 
-    // Find the first accessible RAG store
-    let accessibleRagStore: string | null = null;
-    for (const doc of completedDocs) {
-      if (doc.rag_store_name) {
-        const isAccessible = await isRagStoreAccessible(doc.rag_store_name);
-        if (isAccessible) {
-          accessibleRagStore = doc.rag_store_name;
-          break;
-        } else {
-          // Mark inaccessible documents as failed
-          await supabaseAdmin
-            .from('gemini_documents')
-            .update({
-              upload_status: 'failed',
-              error_message: 'RAG store not accessible with current API key'
-            })
-            .eq('id', doc.id);
-        }
-      }
-    }
-
-    if (!accessibleRagStore) {
-      return NextResponse.json({
-        error: 'No accessible documents found. Please sync alumni profiles or upload new documents.',
-      }, { status: 404 });
-    }
-
-    // Get chat history for this session
+    // ── 2. Load session chat history ───────────────────────────────────────
     const { data: historyRecords } = await supabaseAdmin
       .from('gemini_chat_history')
-      .select('*')
+      .select('message_role, message_text')
       .eq('session_id', currentSessionId)
       .order('created_at', { ascending: true });
 
-    // Convert to ChatMessage format
-    const history: ChatMessage[] = historyRecords?.map(record => ({
-      role: record.message_role as 'user' | 'model',
-      parts: [{ text: record.message_text }],
-      groundingChunks: record.grounding_chunks || undefined,
-    })) || [];
+    const history: ChatMessage[] = (historyRecords || []).map(r => ({
+      role: r.message_role as 'user' | 'model',
+      parts: [{ text: r.message_text }],
+    }));
 
-    // Call Gemini AI
-    const response = await chatWithDocuments(
-      accessibleRagStore,
-      message,
-      history
-    );
+    // ── 3. Get AI response (Gemini first, smart search fallback) ──────────
+    let responseText: string;
 
-    // Save user message to history
-    await supabaseAdmin.from('gemini_chat_history').insert({
-      session_id: currentSessionId,
-      user_id: null, // Public chat - no user ID
-      message_role: 'user',
-      message_text: message,
-      grounding_chunks: null,
-    });
+    try {
+      const alumniContext = buildAlumniContext(safeProfiles);
+      const aiResult = await chatWithContext(alumniContext, message, history);
+      responseText = aiResult.text;
+    } catch (geminiErr: any) {
+      if (isPermanentBlock(geminiErr)) {
+        // Gemini project is blocked — use smart keyword search instead
+        responseText = buildSmartResponse(message, safeProfiles);
+      } else if ((geminiErr?.status ?? 0) === 429) {
+        return NextResponse.json(
+          { error: "I'm a little busy right now — too many people asking at once! Please try again in a minute." },
+          { status: 429 }
+        );
+      } else {
+        // Transient error — still fall back gracefully
+        console.error('Gemini error, falling back to smart search:', geminiErr?.message);
+        responseText = buildSmartResponse(message, safeProfiles);
+      }
+    }
 
-    // Save AI response to history
-    await supabaseAdmin.from('gemini_chat_history').insert({
-      session_id: currentSessionId,
-      user_id: null,
-      message_role: 'model',
-      message_text: response.text,
-      grounding_chunks: response.groundingChunks || null,
-    });
+    // ── 4. Persist both turns ──────────────────────────────────────────────
+    await supabaseAdmin.from('gemini_chat_history').insert([
+      {
+        session_id: currentSessionId,
+        user_id: null,
+        message_role: 'user',
+        message_text: message,
+        grounding_chunks: null,
+      },
+      {
+        session_id: currentSessionId,
+        user_id: null,
+        message_role: 'model',
+        message_text: responseText,
+        grounding_chunks: null,
+      },
+    ]);
 
     return NextResponse.json({
-      response: response.text,
-      groundingChunks: response.groundingChunks,
+      response: responseText,
+      groundingChunks: [],
       sessionId: currentSessionId,
     });
 
   } catch (err: any) {
-    console.error('Error in POST /api/gemini/chat:', err);
-
-    // Check for specific Gemini API errors
-    const errorMessage = err?.message?.toLowerCase() || '';
-
-    // API Key errors
-    if (errorMessage.includes('api key') || errorMessage.includes('api_key')) {
-      return NextResponse.json({
-        error: 'Gemini API key is not configured. Please contact administrator.',
-      }, { status: 500 });
-    }
-
-    // Permission denied / RAG Store access errors (403)
-    if (errorMessage.includes('permission') ||
-        errorMessage.includes('permission_denied') ||
-        errorMessage.includes('does not exist') ||
-        err?.error?.status === 'PERMISSION_DENIED' ||
-        err?.status === 403 ||
-        err?.code === 403 ||
-        err?.error?.code === 403) {
-      return NextResponse.json({
-        error: 'Documents need to be re-uploaded. The AI knowledge base is not accessible with the current API key. Please contact an administrator to sync alumni profiles.',
-      }, { status: 403 });
-    }
-
-    // Quota/Rate limit errors (429)
-    if (errorMessage.includes('quota') ||
-        errorMessage.includes('rate limit') ||
-        errorMessage.includes('resource_exhausted') ||
-        errorMessage.includes('429') ||
-        err?.status === 429 ||
-        err?.code === 429) {
-      return NextResponse.json({
-        error: 'AI service is temporarily unavailable due to rate limits. Please try again in a few minutes.',
-      }, { status: 429 });
-    }
-
-    return NextResponse.json({
-      error: 'Failed to process your message. Please try again.',
-    }, { status: 500 });
+    console.error('Unexpected error in POST /api/gemini/chat:', err);
+    return NextResponse.json(
+      { error: 'Something went wrong. Please try again in a moment.' },
+      { status: 500 }
+    );
   }
 }
