@@ -7,7 +7,8 @@ const GallerySection = () => {
   return (
     <section
       id="gallery"
-      className="w-full bg-neutral-100 py-8 sm:py-10 md:py-12 lg:py-14"
+      className="w-full py-8 sm:py-10 md:py-12 lg:py-14"
+      style={{ backgroundColor: '#ffffff' }}
       aria-labelledby="gallery-heading"
     >
       <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,8 +16,8 @@ const GallerySection = () => {
         <div className="text-center mb-5 sm:mb-6 md:mb-8">
           <h2
             id="gallery-heading"
-            className="text-[rgba(88,43,143,1)] font-bold leading-tight"
-            style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: '1.2' }}
+            className="font-bold leading-tight"
+            style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: '1.2', color: 'rgba(78,46,140,1)' }}
           >
             Snapshots from the Hill
           </h2>
@@ -40,7 +41,7 @@ const GallerySection = () => {
         {/* View Gallery Button */}
         <div className="flex justify-center">
           <Link href="/gallery">
-            <button className="bg-[rgba(217,81,100,1)] text-neutral-100 font-black text-sm sm:text-base px-8 sm:px-12 md:px-14 py-2.5 sm:py-3 !rounded-full hover:bg-[rgba(197,61,80,1)] hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg focus:outline-none focus:ring-4 focus:ring-[rgba(217,81,100,0.3)] focus:ring-offset-2 focus:ring-offset-neutral-100">
+            <button className="bg-[rgba(217,81,100,1)] text-neutral-100 font-black text-sm sm:text-base px-8 sm:px-12 md:px-14 py-2.5 sm:py-3 !rounded-full hover:bg-[rgba(197,61,80,1)] hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg focus:outline-none focus:ring-4 focus:ring-[rgba(217,81,100,0.3)] focus:ring-offset-2 focus:ring-offset-[rgba(64,34,120,1)]">
               View Gallery
             </button>
           </Link>

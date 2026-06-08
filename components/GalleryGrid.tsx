@@ -6,29 +6,22 @@ import { useGalleryAlbums } from '@/lib/hooks/use-gallery-albums';
 import { useInfiniteScroll } from '@/lib/hooks/use-infinite-scroll';
 import { GALLERY_CONFIG } from '@/lib/config/gallery-config';
 
+type GalleryState = ReturnType<typeof useGalleryAlbums>;
+
 interface GalleryGridProps {
-  /**
-   * Expose hook return values for parent component integration
-   * Optional - if not provided, component manages its own state
-   */
-  externalState?: ReturnType<typeof useGalleryAlbums>;
+  externalState?: GalleryState;
 }
 
-const GalleryGrid: React.FC<GalleryGridProps> = ({ externalState }) => {
-  // Use external state if provided, otherwise use internal hook
-  const internalState = useGalleryAlbums();
-  const {
-    albums,
-    loading,
-    error,
-    hasMore,
-    total,
-    autoLoadCount,
-    loadMore,
-    retry,
-  } = externalState || internalState;
-
-  // Setup infinite scroll sentinel
+// ── Inner UI (no data-fetching hooks) ────────────────────────────────────────
+const GalleryGridInner: React.FC<GalleryState> = ({
+  albums,
+  loading,
+  error,
+  hasMore,
+  autoLoadCount,
+  loadMore,
+  retry,
+}) => {
   const sentinelRef = useInfiniteScroll({
     onLoadMore: loadMore,
     enabled: autoLoadCount < GALLERY_CONFIG.MAX_AUTO_LOADS,
@@ -37,18 +30,16 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ externalState }) => {
     autoLoadCount,
   });
 
-  // Initial loading state (no albums loaded yet)
   if (loading && albums.length === 0) {
     return (
       <section className="w-full max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 mt-8 sm:mt-10 md:mt-12" aria-label="Photo gallery">
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white" />
         </div>
       </section>
     );
   }
 
-  // Error state
   if (error && albums.length === 0) {
     return (
       <section className="w-full max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 mt-8 sm:mt-10 md:mt-12" aria-label="Photo gallery">
@@ -65,7 +56,6 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ externalState }) => {
     );
   }
 
-  // Empty state
   if (!loading && albums.length === 0) {
     return (
       <section className="w-full max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 mt-8 sm:mt-10 md:mt-12" aria-label="Photo gallery">
@@ -90,18 +80,16 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ externalState }) => {
         ))}
       </div>
 
-      {/* Infinite scroll sentinel - invisible trigger for auto-loading */}
+      {/* Infinite scroll sentinel */}
       <div ref={sentinelRef} className="h-px" aria-hidden="true" />
 
-      {/* Loading indicator during auto-scroll */}
       {loading && albums.length > 0 && autoLoadCount < GALLERY_CONFIG.MAX_AUTO_LOADS && (
         <div className="flex flex-col items-center gap-3 mt-12 mb-8">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white" />
           <p className="text-white/70 text-sm">Loading more albums...</p>
         </div>
       )}
 
-      {/* Error message during loading more */}
       {error && albums.length > 0 && (
         <div className="text-center mt-12 mb-8">
           <p className="text-red-400 text-sm mb-3">{error}</p>
@@ -115,6 +103,18 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ externalState }) => {
       )}
     </section>
   );
+};
+
+// ── Self-managed wrapper (only mounts when no externalState) ──────────────────
+const GalleryGridManaged: React.FC = () => {
+  const state = useGalleryAlbums();
+  return <GalleryGridInner {...state} />;
+};
+
+// ── Public API ────────────────────────────────────────────────────────────────
+const GalleryGrid: React.FC<GalleryGridProps> = ({ externalState }) => {
+  if (externalState) return <GalleryGridInner {...externalState} />;
+  return <GalleryGridManaged />;
 };
 
 export default GalleryGrid;

@@ -5,7 +5,7 @@
 
 export const GALLERY_CONFIG = {
   // Number of items to load per page/batch
-  ITEMS_PER_PAGE: 6,
+  ITEMS_PER_PAGE: 8,
 
   // Maximum number of automatic loads before showing manual Load More button
   // 0 auto-loads = No automatic loading, Load More button shows immediately

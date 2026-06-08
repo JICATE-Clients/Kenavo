@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Image, Mail, Plus, Info, X } from 'lucide-react';
+import { Home, Users, Image, Mail, Plus, Info, Star, X } from 'lucide-react';
 
 const MobileBottomNav = () => {
   const pathname = usePathname();
@@ -109,6 +109,14 @@ const MobileBottomNav = () => {
               >
                 <Info size={14} className="text-white/90" />
                 <span className="text-xs font-medium text-white">About</span>
+              </Link>
+              <Link
+                href="/reunion-2025"
+                onClick={() => setShowMenu(false)}
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/10 rounded-lg transition-all duration-200 active:scale-95"
+              >
+                <Star size={14} className="text-white/90" />
+                <span className="text-xs font-medium text-white">Reunion &apos;25</span>
               </Link>
             </div>
           </div>

@@ -1,15 +1,23 @@
-'use client';
-
-import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import GalleryGrid from '@/components/GalleryGrid';
-import LoadMoreButton from '@/components/LoadMoreButton';
-import { useGalleryAlbums } from '@/lib/hooks/use-gallery-albums';
+import GalleryClient from '@/components/GalleryClient';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { GALLERY_CONFIG } from '@/lib/config/gallery-config';
 
-export default function GalleryPage() {
-  // Manage gallery state at page level
-  const galleryState = useGalleryAlbums();
+export default async function GalleryPage() {
+  const limit = GALLERY_CONFIG.ITEMS_PER_PAGE;
+
+  // Fetch directly from Supabase on the server — no API roundtrip, no client spinner
+  const { data, count } = await supabaseAdmin
+    .from('gallery_albums')
+    .select('id, name, slug, thumbnail_url, display_order', { count: 'exact' })
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+    .range(0, limit - 1);
+
+  const albums  = data ?? [];
+  const total   = count ?? 0;
+  const hasMore = total > albums.length;
 
   return (
     <div className="bg-[rgba(78,46,140,1)] flex flex-col overflow-hidden items-center min-h-screen">
@@ -17,7 +25,10 @@ export default function GalleryPage() {
 
       <main className="flex flex-col items-center w-full px-4 sm:px-6 lg:px-8">
         <section className="w-full max-w-[1000px] mt-8 sm:mt-10 md:mt-12">
-          <h1 className="text-[rgba(217,81,100,1)] text-[24px] sm:text-[30px] md:text-[36px] lg:text-[42px] font-bold leading-[1.15] text-center">
+          <h1
+            className="text-[rgba(217,81,100,1)] font-bold leading-[1.15] text-center"
+            style={{ fontSize: 'clamp(24px, 4vw, 42px)' }}
+          >
             Photo Gallery
           </h1>
           <p className="text-white text-[14px] sm:text-[15px] md:text-[17px] lg:text-[18px] mt-3 sm:mt-4 md:mt-5 text-center leading-[1.5]">
@@ -25,20 +36,11 @@ export default function GalleryPage() {
           </p>
         </section>
 
-        {/* Pass shared state to GalleryGrid */}
-        <GalleryGrid externalState={galleryState} />
-
-        {/* Load More Button - shows after initial load when more albums available */}
-        <div className="w-full flex justify-center mb-10 sm:mb-12 md:mb-14">
-          <LoadMoreButton
-            onLoadMore={galleryState.loadMore}
-            loading={galleryState.loading}
-            hasMore={galleryState.hasMore}
-            autoLoadCount={galleryState.autoLoadCount}
-            total={galleryState.total}
-            currentCount={galleryState.albums.length}
-          />
-        </div>
+        <GalleryClient
+          initialAlbums={albums}
+          initialHasMore={hasMore}
+          initialTotal={total}
+        />
       </main>
 
       <Footer />

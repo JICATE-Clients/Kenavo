@@ -16,7 +16,7 @@ const Header = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-12 xl:gap-16" role="navigation" aria-label="Main navigation">
+        <nav className="hidden lg:flex items-center gap-8 xl:gap-12" role="navigation" aria-label="Main navigation">
           <Link href="/about" className="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
             ABOUT KENAVO
           </Link>
@@ -26,13 +26,16 @@ const Header = () => {
           <Link href="/gallery" className="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
             GALLERY
           </Link>
+          <Link href="/reunion-2025" className="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
+            REUNION &apos;25
+          </Link>
           <Link href="/contact" className="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
             CONTACT
           </Link>
         </nav>
 
         {/* Tablet Navigation */}
-        <nav className="hidden md:flex lg:hidden items-center gap-8" role="navigation" aria-label="Tablet navigation">
+        <nav className="hidden md:flex lg:hidden items-center gap-6" role="navigation" aria-label="Tablet navigation">
           <Link href="/about" className="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
             ABOUT
           </Link>
@@ -41,6 +44,9 @@ const Header = () => {
           </Link>
           <Link href="/gallery" className="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
             GALLERY
+          </Link>
+          <Link href="/reunion-2025" className="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
+            REUNION
           </Link>
           <Link href="/contact" className="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
             CONTACT

@@ -34,7 +34,7 @@ const Footer = () => {
         </div>
 
         {/* Divider and navigation - hidden on mobile, visible on desktop */}
-        <hr className="hidden lg:block border w-full h-px mt-4 lg:mt-5 border-white border-solid" />
+        <div className="hidden lg:block w-full h-px bg-white/30 mt-4 lg:mt-5" />
         <nav
           className="hidden lg:flex flex-col sm:flex-row items-center sm:items-stretch gap-3 sm:gap-4 md:gap-6 lg:gap-8 text-[10px] sm:text-xs md:text-sm text-white font-normal leading-none mt-4 lg:mt-5 justify-center md:justify-start"
           role="navigation"
