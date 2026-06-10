@@ -21,15 +21,12 @@ export default function Reunion2025Page() {
               Montfort School, Yercaud · November 7–9, 2025
             </p>
             <h1
-              className="text-white font-bold leading-[1.1] tracking-tight"
-              style={{ fontSize: 'clamp(32px, 5.5vw, 64px)' }}
+              className="text-white font-bold leading-[1.2] tracking-tight"
+              style={{ fontSize: 'clamp(26px, 4.5vw, 48px)' }}
             >
-              KENAVO <span className="text-[rgba(217,81,100,1)]">25th</span> Reunion
+              KENAVO <span className="text-[rgba(217,81,100,1)]">25th</span> Reunion: A Weekend That Turned Back Time
             </h1>
-            <div className="w-16 h-0.5 bg-[rgba(217,81,100,0.5)] mx-auto my-5 rounded-full" />
-            <p className="text-white/70 text-lg sm:text-2xl font-light italic">
-              A Weekend That Turned Back Time
-            </p>
+            <div className="w-16 h-0.5 bg-[rgba(217,81,100,0.5)] mx-auto mt-6 rounded-full" />
           </div>
         </section>
 
