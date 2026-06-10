@@ -3,7 +3,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 export const metadata = {
-  title: 'Reunion 2025 | Kenavo',
+  title: 'KENAVO 25th Reunion: A Weekend That Turned Back Time',
   description: 'A Weekend That Turned Back Time — The KENAVO 25th Reunion, November 7–9, 2025, at Montfort School, Yercaud.',
 };
 
@@ -21,13 +21,13 @@ export default function Reunion2025Page() {
               Montfort School, Yercaud · November 7–9, 2025
             </p>
             <h1
-              className="text-white font-bold leading-none"
-              style={{ fontSize: 'clamp(40px, 7vw, 82px)' }}
+              className="text-white font-bold leading-[1.1] tracking-tight"
+              style={{ fontSize: 'clamp(32px, 5.5vw, 64px)' }}
             >
-              REUNION<span className="text-[rgba(217,81,100,1)]">&nbsp;&apos;25</span>
+              KENAVO <span className="text-[rgba(217,81,100,1)]">25th</span> Reunion
             </h1>
             <div className="w-16 h-0.5 bg-[rgba(217,81,100,0.5)] mx-auto my-5 rounded-full" />
-            <p className="text-white/70 text-base sm:text-xl font-light italic">
+            <p className="text-white/70 text-lg sm:text-2xl font-light italic">
               A Weekend That Turned Back Time
             </p>
           </div>
