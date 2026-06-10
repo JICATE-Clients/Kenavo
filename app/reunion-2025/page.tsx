@@ -17,9 +17,6 @@ export default function Reunion2025Page() {
         {/* ── Hero ─────────────────────────────────── */}
         <section className="w-full py-16 sm:py-20 md:py-28 px-4 sm:px-6 text-center">
           <div className="max-w-3xl mx-auto">
-            <p className="text-[rgba(217,81,100,1)] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase mb-4">
-              Montfort School, Yercaud · November 7–9, 2025
-            </p>
             <h1
               className="text-white font-bold leading-[1.2] tracking-tight"
               style={{ fontSize: 'clamp(26px, 4.5vw, 48px)' }}
