@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   try {
     // Parse request body
     const body = await request.json();
-    const { name, slug, description, thumbnail_url, display_order, is_active } = body;
+    const { name, slug, description, thumbnail_url, drive_folder_id, display_order, is_active } = body;
 
     // Validate required fields
     if (!name || !slug) {
@@ -71,6 +71,7 @@ export async function POST(request: Request) {
         slug,
         description: description || null,
         thumbnail_url: thumbnail_url || null,
+        drive_folder_id: drive_folder_id || null,
         display_order: display_order || 0,
         is_active: is_active !== undefined ? is_active : true
       })

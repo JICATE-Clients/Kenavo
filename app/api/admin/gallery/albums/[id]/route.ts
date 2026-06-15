@@ -63,7 +63,7 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { name, slug, description, thumbnail_url, display_order, is_active } = body;
+    const { name, slug, description, thumbnail_url, drive_folder_id, display_order, is_active } = body;
 
     // Build update object (only include provided fields)
     const updateData: any = {};
@@ -71,6 +71,7 @@ export async function PUT(
     if (slug !== undefined) updateData.slug = slug;
     if (description !== undefined) updateData.description = description;
     if (thumbnail_url !== undefined) updateData.thumbnail_url = thumbnail_url;
+    if (drive_folder_id !== undefined) updateData.drive_folder_id = drive_folder_id || null;
     if (display_order !== undefined) updateData.display_order = display_order;
     if (is_active !== undefined) updateData.is_active = is_active;
 

@@ -15,6 +15,7 @@ export default function AlbumFormModal({ mode, album, onClose }: AlbumFormModalP
     name: album?.name || '',
     slug: album?.slug || '',
     description: album?.description || '',
+    drive_folder_id: album?.drive_folder_id || '',
     display_order: album?.display_order ?? 0,
     is_active: album?.is_active ?? true,
   });
@@ -158,6 +159,21 @@ export default function AlbumFormModal({ mode, album, onClose }: AlbumFormModalP
               className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/50 border border-white/30 focus:border-white focus:outline-none"
               placeholder="Brief description of this album"
             />
+          </div>
+
+          <div>
+            <label className="block text-white font-semibold mb-2">Google Drive Folder ID</label>
+            <input
+              type="text"
+              name="drive_folder_id"
+              value={formData.drive_folder_id}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/50 border border-white/30 focus:border-white focus:outline-none font-mono text-sm"
+              placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+            />
+            <p className="text-xs text-white/50 mt-1">
+              From the Drive folder URL: drive.google.com/drive/folders/<strong className="text-white/70">FOLDER_ID</strong>
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

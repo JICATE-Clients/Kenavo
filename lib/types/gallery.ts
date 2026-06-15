@@ -13,6 +13,7 @@ export interface GalleryAlbum {
   slug: string;
   description: string | null;
   thumbnail_url: string | null;
+  drive_folder_id: string | null;
   display_order: number;
   is_active: boolean;
   created_at: string;

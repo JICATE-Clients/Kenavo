@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Image as ImageIcon, Edit2, Trash2, Star, RefreshCw, GripVertical, CheckSquare, Square, X } from 'lucide-react';
+import { Image as ImageIcon, Edit2, Trash2, Star, RefreshCw, GripVertical, CheckSquare, Square, X, CloudDownload } from 'lucide-react';
 import { GalleryAlbum, GalleryImage } from '@/lib/types/gallery';
 import ImageDetailModal from './ImageDetailModal';
 import SetThumbnailModal from './SetThumbnailModal';
@@ -24,6 +24,8 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
   const [selectedImages, setSelectedImages] = useState<Set<number>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [deletingImageId, setDeletingImageId] = useState<number | null>(null);
+  const [syncingDrive, setSyncingDrive] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     fetchImages();
@@ -190,6 +192,32 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
     }
   };
 
+  const handleSyncFromDrive = async () => {
+    setSyncingDrive(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/admin/gallery/sync-drive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ album_id: album.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncResult({ type: 'success', text: data.message });
+        if (data.synced > 0) {
+          fetchImages();
+          onUpdate();
+        }
+      } else {
+        setSyncResult({ type: 'error', text: data.error || 'Sync failed' });
+      }
+    } catch (err: any) {
+      setSyncResult({ type: 'error', text: err.message || 'Network error' });
+    } finally {
+      setSyncingDrive(false);
+    }
+  };
+
   const isAllSelected = images.length > 0 && selectedImages.size === images.length;
 
   return (
@@ -201,6 +229,20 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
         <div className="flex items-center gap-2">
           {!selectionMode ? (
             <>
+              {album.drive_folder_id && (
+                <button
+                  onClick={handleSyncFromDrive}
+                  disabled={syncingDrive}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800 disabled:cursor-not-allowed text-white text-sm font-semibold transition-all"
+                >
+                  {syncingDrive ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  ) : (
+                    <CloudDownload size={16} />
+                  )}
+                  {syncingDrive ? 'Syncing…' : 'Sync from Drive'}
+                </button>
+              )}
               <button
                 onClick={toggleSelectionMode}
                 disabled={images.length === 0}
@@ -236,6 +278,20 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
           )}
         </div>
       </div>
+
+      {/* Drive sync result banner */}
+      {syncResult && (
+        <div className={`mb-4 p-3 rounded-lg text-sm flex items-center justify-between ${
+          syncResult.type === 'success'
+            ? 'bg-emerald-50 border-2 border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border-2 border-red-200 text-red-800'
+        }`}>
+          <span>{syncResult.text}</span>
+          <button onClick={() => setSyncResult(null)} className="ml-3 opacity-60 hover:opacity-100">
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Selection mode toolbar */}
       {selectionMode && (
