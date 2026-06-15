@@ -2006,6 +2006,8 @@ function AuthAccountsTab() {
   const [individualResetPasswords, setIndividualResetPasswords] = useState<Record<number, string>>({});
   const [individualResetLoading, setIndividualResetLoading] = useState<Record<number, boolean>>({});
   const [individualResetMessages, setIndividualResetMessages] = useState<Record<number, { type: 'success' | 'error'; text: string }>>({});
+  const [sendEmailLoading, setSendEmailLoading] = useState(false);
+  const [sendEmailMessage, setSendEmailMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleBackfill = async () => {
     setBackfillLoading(true);
@@ -2220,6 +2222,28 @@ function AuthAccountsTab() {
     }
   };
 
+  const handleSendWelcomeEmails = async () => {
+    if (!window.confirm('This will send a "Set Your Password" email to every non-Gmail user who has a login account. Continue?')) return;
+    setSendEmailLoading(true);
+    setSendEmailMessage(null);
+    try {
+      const res = await fetch('/api/admin/send-welcome-emails', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setSendEmailMessage({
+          type: 'success',
+          text: `Sent ${data.summary.sent} welcome emails. ${data.summary.skippedGmail} Gmail users skipped. ${data.summary.skippedNoAccount} have no account yet. ${data.summary.failed} failed.`,
+        });
+      } else {
+        setSendEmailMessage({ type: 'error', text: data.error || 'Failed to send emails.' });
+      }
+    } catch {
+      setSendEmailMessage({ type: 'error', text: 'Network error.' });
+    } finally {
+      setSendEmailLoading(false);
+    }
+  };
+
   const statusBadge = (status: AuthProfile['authStatus']) => {
     switch (status) {
       case 'gmail':
@@ -2361,6 +2385,33 @@ function AuthAccountsTab() {
           )}
         </div>
       )}
+
+      {/* Send Welcome Emails Section */}
+      <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Mail size={20} className="text-blue-700" />
+          <h3 className="font-bold text-blue-800">Send Welcome Emails</h3>
+        </div>
+        <p className="text-sm text-blue-700">
+          Sends each non-Gmail alumni (who already has a login account) a personalised email with a one-time link to set their own password. Links expire after 24 hours.
+        </p>
+        <button
+          onClick={handleSendWelcomeEmails}
+          disabled={sendEmailLoading}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm transition-all whitespace-nowrap"
+        >
+          {sendEmailLoading ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
+          {sendEmailLoading ? 'Sending emails...' : 'Send Welcome Emails'}
+        </button>
+        {sendEmailMessage && (
+          <div className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
+            sendEmailMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
+            {sendEmailMessage.type === 'success' ? <CheckCircle size={16} className="mt-0.5 shrink-0" /> : <AlertCircle size={16} className="mt-0.5 shrink-0" />}
+            <span>{sendEmailMessage.text}</span>
+          </div>
+        )}
+      </div>
 
       {/* Bulk Password Reset Section (destructive) */}
       <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6 space-y-4">

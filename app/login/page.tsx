@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LogIn, AlertCircle, CheckCircle, Loader2, Mail, Lock } from 'lucide-react';
 import { signInWithGoogle, getUser } from '@/lib/auth/client';
-// import Link from 'next/link';
+import Link from 'next/link';
 
 // Separate component that uses useSearchParams
 function LoginContent() {
@@ -277,15 +277,14 @@ function LoginContent() {
               </div>
             </div>
 
-            {/* FORGOT PASSWORD DISABLED */}
-            {/* <div className="flex justify-end">
+            <div className="flex justify-end">
               <Link
                 href="/forgot-password"
                 className="text-sm text-purple-300 hover:text-purple-100 transition-colors"
               >
                 Forgot password?
               </Link>
-            </div> */}
+            </div>
 
             {/* Sign In Button */}
             <button
