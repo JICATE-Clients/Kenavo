@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { generateExampleQuestions } from '@/lib/gemini/service';
 import { generateDataDrivenQuestions } from '@/lib/alumni/smartSearch';
+import { getUser } from '@/lib/auth/server';
 
 const FALLBACK_QUESTIONS = [
   "Who's working in tech these days?",
@@ -21,13 +22,20 @@ const FALLBACK_QUESTIONS = [
  */
 export async function GET(_request: NextRequest) {
   try {
+    // Check authentication — location is only used in suggestions for logged-in users
+    const { user } = await getUser();
+    const isAuthenticated = !!user;
+
     const { data: profiles } = await supabaseAdmin
       .from('profiles')
       .select('name, location, current_job, designation_organisation, year_graduated')
       .order('name')
       .limit(40);
 
-    const safeProfiles = profiles || [];
+    // Redact location for unauthenticated users so generated suggestions don't reveal addresses
+    const safeProfiles = (profiles || []).map(p =>
+      isAuthenticated ? p : { ...p, location: null }
+    );
 
     // Try Gemini first (better, more varied questions)
     if (safeProfiles.length > 0) {

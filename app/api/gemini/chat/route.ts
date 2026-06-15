@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { chatWithContext } from '@/lib/gemini/service';
 import { buildSmartResponse } from '@/lib/alumni/smartSearch';
 import type { ChatRequest, ChatMessage } from '@/lib/types/database';
+import { getUser } from '@/lib/auth/server';
 import { v4 as uuidv4 } from 'uuid';
 
 type ProfileRow = {
@@ -60,13 +61,20 @@ export async function POST(request: NextRequest) {
 
     const currentSessionId = sessionId || uuidv4();
 
+    // Check authentication — location/address is only shared with logged-in users
+    const { user } = await getUser();
+    const isAuthenticated = !!user;
+
     // ── 1. Fetch alumni profiles ───────────────────────────────────────────
     const { data: profiles } = await supabaseAdmin
       .from('profiles')
       .select('name, location, current_job, designation_organisation, year_graduated, nicknames')
       .order('name');
 
-    const safeProfiles: ProfileRow[] = profiles || [];
+    // Redact location for unauthenticated users before it reaches the AI or fallback search
+    const safeProfiles: ProfileRow[] = (profiles || []).map(p =>
+      isAuthenticated ? p : { ...p, location: null }
+    );
 
     // ── 2. Load session chat history ───────────────────────────────────────
     const { data: historyRecords } = await supabaseAdmin
