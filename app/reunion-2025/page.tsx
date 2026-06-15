@@ -395,7 +395,7 @@ export default function Reunion2025Page() {
               <p>
                 As we were driving down hill Doc Bala had this epifini to which Anto, Tom and I readily
                 agreed, to meet with R Arun- as so all of us along with Omm and Annadurai figured out were
-                Arun&rsquo;s house was and gate crashed his place. He could attend the reunion so we took the
+                Arun&rsquo;s house was and gate crashed his place. He could not attend the reunion so we took the
                 reunion to him and had a blast! We left Salem post lunch with Arun, Omm, Annadurai, Anto,
                 Tom and I. With Doc Anto at the helm we were finally speeding back to Kochi, which I am sure
                 none of us were in a hurry to get back after such an amazing reunion! Thanks to everyone who
