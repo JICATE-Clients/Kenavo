@@ -18,7 +18,7 @@ function getAuth() {
 export async function listDriveImages(folderId: string): Promise<DriveFile[]> {
   const drive = google.drive({ version: 'v3', auth: getAuth() });
   const res = await drive.files.list({
-    q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
+    q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`,
     fields: 'files(id,name,mimeType)',
     pageSize: 1000,
   });

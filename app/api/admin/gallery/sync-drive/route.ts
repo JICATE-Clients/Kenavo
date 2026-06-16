@@ -6,6 +6,7 @@ import { listDriveImages, downloadDriveFile } from '@/lib/google-drive';
 const GALLERY_BUCKET = 'gallery-images';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // allow up to 5 min for large video uploads
 
 export async function POST(request: NextRequest) {
   const authCheck = await protectAdminRoute();

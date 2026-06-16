@@ -106,22 +106,31 @@ const GalleryImagesGrid: React.FC<GalleryImagesGridProps> = ({
     );
   }
 
+  const isVideo = (src: string) => /\.(mp4|mov|webm|avi)$/i.test(src);
+
   // Responsive grid - 2 columns mobile, 3 tablet, 4 desktop
   const renderGrid = () => {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 w-full mt-8 sm:mt-12 md:mt-16 lg:mt-20">
         {galleryImages.map((image, index) => (
-          <div
-            key={index}
-            className="w-full aspect-square"
-          >
-            <img
-              src={image.src}
-              alt={image.alt}
-              onClick={() => handleImageClick(index)}
-              className="w-full h-full object-cover rounded-lg hover:opacity-80 hover:scale-105 transition-all duration-300 cursor-pointer shadow-md"
-              loading="lazy"
-            />
+          <div key={index} className="w-full aspect-square">
+            {isVideo(image.src) ? (
+              <video
+                src={image.src}
+                controls
+                muted
+                playsInline
+                className="w-full h-full object-cover rounded-lg shadow-md"
+              />
+            ) : (
+              <img
+                src={image.src}
+                alt={image.alt}
+                onClick={() => handleImageClick(index)}
+                className="w-full h-full object-cover rounded-lg hover:opacity-80 hover:scale-105 transition-all duration-300 cursor-pointer shadow-md"
+                loading="lazy"
+              />
+            )}
           </div>
         ))}
       </div>

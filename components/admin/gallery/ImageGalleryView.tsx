@@ -404,12 +404,21 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
                     #{index + 1}
                   </div>
 
-                  {/* Image */}
-                  <img
-                    src={image.image_url}
-                    alt={image.caption || `Image ${index + 1}`}
-                    className="w-full h-40 object-cover pointer-events-none"
-                  />
+                  {/* Image or Video */}
+                  {/\.(mp4|mov|webm|avi)$/i.test(image.image_url) ? (
+                    <video
+                      src={image.image_url}
+                      muted
+                      playsInline
+                      className="w-full h-40 object-cover pointer-events-none"
+                    />
+                  ) : (
+                    <img
+                      src={image.image_url}
+                      alt={image.caption || `Image ${index + 1}`}
+                      className="w-full h-40 object-cover pointer-events-none"
+                    />
+                  )}
 
                   {/* Caption */}
                   {image.caption && (
