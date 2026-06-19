@@ -205,11 +205,13 @@ export default function KenavoAIChatWidget() {
             aria-hidden
           >
             <defs>
-              {/* Body: lighter purple top → brand purple bottom for a rounded, lit look */}
+              {/* Body: lighter purple top → brand purple bottom for a rounded,
+                  lit look. The white outline below keeps it readable even when
+                  the launcher sits over a purple part of the page. */}
               <linearGradient id="kenavoBubbleBody" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8A63D6" />
-                <stop offset="55%" stopColor="#5E3AA6" />
-                <stop offset="100%" stopColor="#3F2575" />
+                <stop offset="0%" stopColor="#9D78E6" />
+                <stop offset="55%" stopColor="#6E45C2" />
+                <stop offset="100%" stopColor="#4E2E8C" />
               </linearGradient>
               {/* Glossy highlight across the top */}
               <linearGradient id="kenavoBubbleGloss" x1="0" y1="0" x2="0" y2="1">
@@ -218,18 +220,19 @@ export default function KenavoAIChatWidget() {
               </linearGradient>
               {/* Soft drop shadow for depth */}
               <filter id="kenavoBubbleShadow" x="-40%" y="-40%" width="180%" height="180%">
-                <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" floodColor="#2A1A52" floodOpacity="0.45" />
+                <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" floodColor="#2A1A52" floodOpacity="0.5" />
               </filter>
             </defs>
 
             <g filter="url(#kenavoBubbleShadow)">
-              {/* Speech bubble body + tail */}
+              {/* Speech bubble body + tail — white outline so the purple bubble
+                  separates cleanly from a purple background. */}
               <path
                 d="M16 8 H48 a10 10 0 0 1 10 10 V36 a10 10 0 0 1 -10 10 H30 l-10 10 v-10 h-4 a10 10 0 0 1 -10 -10 V18 a10 10 0 0 1 10 -10 Z"
                 fill="url(#kenavoBubbleBody)"
                 stroke="#ffffff"
-                strokeOpacity="0.18"
-                strokeWidth="1"
+                strokeOpacity="0.9"
+                strokeWidth="2"
               />
               {/* Top gloss */}
               <path
