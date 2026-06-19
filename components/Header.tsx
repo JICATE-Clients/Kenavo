@@ -56,21 +56,26 @@ function MemoriesDropdown({ label, linkClassName }: { label: string; linkClassNa
       </button>
 
       {open && (
-        <div
-          role="menu"
-          className="absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-xl border border-black/5 bg-white p-1.5 shadow-xl"
-        >
-          {MEMORIES_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2 text-[13px] font-medium normal-case tracking-normal text-neutral-700 transition-colors hover:bg-[#4E2E8C]/8 hover:text-[#4E2E8C]"
-            >
-              {item.label}
-            </Link>
-          ))}
+        // Positioned container sits flush under the button (top-full) with a
+        // transparent pt-2 "bridge" so the mouse never crosses a dead gap on its
+        // way to the menu — the visible card lives inside.
+        <div className="absolute left-1/2 top-full z-50 w-64 -translate-x-1/2 pt-2">
+          <div
+            role="menu"
+            className="rounded-xl border border-black/5 bg-white p-1.5 shadow-xl"
+          >
+            {MEMORIES_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="block rounded-lg px-3 py-2 text-[13px] font-medium normal-case tracking-normal text-neutral-700 transition-colors hover:bg-[#4E2E8C]/8 hover:text-[#4E2E8C]"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -78,15 +83,14 @@ function MemoriesDropdown({ label, linkClassName }: { label: string; linkClassNa
 }
 
 /**
- * Picks the right nav affordance for the memories section: a single destination
- * renders as a plain link (a one-item dropdown is needless friction), while two
- * or more keep the dropdown. Add a second entry to MEMORIES_ITEMS and the menu
- * comes back on its own.
+ * Renders the memories section as a dropdown so its sub-pages (e.g. "Rewind:
+ * The Songs We Grew Up On") are reachable from the nav. Falls back to a plain
+ * link only if the section has no sub-pages at all.
  */
 function MemoriesNav({ label, linkClassName }: { label: string; linkClassName: string }) {
-  if (MEMORIES_ITEMS.length <= 1) {
+  if (MEMORIES_ITEMS.length === 0) {
     return (
-      <Link href={MEMORIES_ITEMS[0]?.href ?? '/echoes-and-memories'} className={linkClassName}>
+      <Link href="/echoes-and-memories" className={linkClassName}>
         {label}
       </Link>
     );
