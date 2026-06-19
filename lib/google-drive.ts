@@ -27,11 +27,39 @@ export async function listDriveImages(folderId: string): Promise<DriveFile[]> {
   );
 }
 
+/**
+ * Stream a Drive file's bytes (for proxying video to a native <video> element).
+ * Forwards the browser's Range header so seeking works and only the needed
+ * chunks are fetched. Returns the gaxios response: `.data` is a Node Readable,
+ * plus `.status` (206 for ranged) and `.headers` (content-type/length/range).
+ */
+export async function streamDriveFile(fileId: string, range?: string) {
+  const drive = google.drive({ version: 'v3', auth: getAuth() });
+  return drive.files.get(
+    { fileId, alt: 'media' },
+    { responseType: 'stream', headers: range ? { Range: range } : undefined }
+  );
+}
+
 export async function downloadDriveFile(fileId: string): Promise<Buffer> {
   const drive = google.drive({ version: 'v3', auth: getAuth() });
-  const res = await drive.files.get(
-    { fileId, alt: 'media' },
-    { responseType: 'arraybuffer' }
-  );
-  return Buffer.from(res.data as ArrayBuffer);
+
+  // Transient ECONNRESET / "fetch failed" from Drive is common; retry a few
+  // times with backoff and cap each attempt so one stall can't hang the request.
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await drive.files.get(
+        { fileId, alt: 'media' },
+        { responseType: 'arraybuffer', timeout: 60_000 }
+      );
+      return Buffer.from(res.data as ArrayBuffer);
+    } catch (err) {
+      lastErr = err;
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      }
+    }
+  }
+  throw lastErr;
 }

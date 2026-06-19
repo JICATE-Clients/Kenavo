@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Save, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Save, Trash2, CheckCircle, AlertCircle, CloudDownload } from 'lucide-react';
 import { GalleryAlbum } from '@/lib/types/gallery';
 
 interface AlbumFormModalProps {
@@ -21,7 +21,9 @@ export default function AlbumFormModal({ mode, album, onClose }: AlbumFormModalP
   });
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -106,16 +108,43 @@ export default function AlbumFormModal({ mode, album, onClose }: AlbumFormModalP
     }
   };
 
+  const handleSync = async () => {
+    if (!album) return;
+
+    setSyncing(true);
+    setSyncMessage(null);
+
+    try {
+      const response = await fetch('/api/admin/gallery/sync-drive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ album_id: album.id }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSyncMessage({ type: 'success', text: result.message || 'Sync complete' });
+      } else {
+        setSyncMessage({ type: 'error', text: result.error || 'Sync failed' });
+      }
+    } catch (error: any) {
+      setSyncMessage({ type: 'error', text: error.message || 'Network error' });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-2xl p-6 max-w-lg w-full border border-white/20">
+      <div className="bg-[#3d2370] rounded-xl p-6 max-w-lg w-full border border-white/20">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">
             {mode === 'create' ? 'Create New Album' : `Edit Album: ${album?.name}`}
           </h2>
           <button
             onClick={onClose}
-            className="text-white hover:text-red-400 transition-all"
+            className="text-white hover:text-red-400 transition-colors"
           >
             <X size={24} />
           </button>
@@ -174,6 +203,41 @@ export default function AlbumFormModal({ mode, album, onClose }: AlbumFormModalP
             <p className="text-xs text-white/50 mt-1">
               From the Drive folder URL: drive.google.com/drive/folders/<strong className="text-white/70">FOLDER_ID</strong>
             </p>
+
+            {mode === 'edit' && album?.drive_folder_id && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={handleSync}
+                  disabled={syncing}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
+                >
+                  {syncing ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  ) : (
+                    <CloudDownload size={16} />
+                  )}
+                  {syncing ? 'Syncing…' : 'Sync images from this folder'}
+                </button>
+
+                {syncMessage && (
+                  <div
+                    className={`mt-2 flex items-center gap-2 p-3 rounded-lg text-sm ${
+                      syncMessage.type === 'success'
+                        ? 'bg-green-500/20 text-green-100'
+                        : 'bg-red-500/20 text-red-100'
+                    }`}
+                  >
+                    {syncMessage.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                    <span>{syncMessage.text}</span>
+                  </div>
+                )}
+
+                <p className="text-xs text-white/50 mt-2">
+                  Imports new photos/videos from the linked Drive folder. Save any change to the folder ID before syncing.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -218,7 +282,7 @@ export default function AlbumFormModal({ mode, album, onClose }: AlbumFormModalP
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2"
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
                 'Saving...'
@@ -235,7 +299,7 @@ export default function AlbumFormModal({ mode, album, onClose }: AlbumFormModalP
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white font-bold transition-all flex items-center gap-2"
+                className="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white font-bold transition-colors flex items-center gap-2"
               >
                 <Trash2 size={18} />
                 {deleting ? 'Deleting...' : 'Delete'}

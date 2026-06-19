@@ -71,7 +71,7 @@ export default function GalleryClient({
             <div key={album.id} className="w-full">
               <GalleryCard
                 title={album.name}
-                imageSrc={album.thumbnail_url || '/placeholder-gallery.jpg'}
+                imageSrc={album.thumbnail_url || '/placeholder-gallery.svg'}
                 href={`/gallery/${album.slug}`}
               />
             </div>

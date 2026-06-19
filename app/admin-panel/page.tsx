@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, UserPlus, CheckCircle, AlertCircle, Edit2, Search, X, Save, List, LogOut, Image as ImageIcon, RefreshCw, Mail, Users, Sparkles, ShieldCheck, Loader2, KeyRound } from 'lucide-react';
+import { Upload, UserPlus, CheckCircle, AlertCircle, Edit2, Search, X, Save, List, LogOut, Image as ImageIcon, RefreshCw, Mail, Users, Sparkles, ShieldCheck, Loader2, KeyRound, Download, FileSpreadsheet } from 'lucide-react';
+import { ImportCard, ImportStatus, ImportNote, FILE_INPUT_CLS, PRIMARY_BTN_CLS, OUTLINE_BTN_CLS, FIELD_LABEL_CLS } from '@/components/admin/import-ui';
 import { useRouter } from 'next/navigation';
 import { signOut } from '@/lib/auth/client';
 import BulkImagePreviewModal, { ImageMapping } from '@/components/admin/BulkImagePreviewModal';
@@ -9,9 +10,12 @@ import GalleryManagementTab from '@/components/admin/GalleryManagementTab';
 import ContactSubmissionsTab from '@/components/ContactSubmissionsTab';
 import UserManagementTab from '@/components/admin/UserManagementTab';
 import AIDocumentsTab from '@/components/admin/AIDocumentsTab';
+import ReunionPageEditorTab from '@/components/admin/ReunionPageEditorTab';
+import RewindPageEditorTab from '@/components/admin/RewindPageEditorTab';
+import AdminShell from '@/components/admin/AdminShell';
 import type { Profile } from '@/lib/types/database';
 
-type TabType = 'manage' | 'bulkUpdate' | 'single' | 'gallery' | 'contact' | 'users' | 'ai-documents' | 'auth-accounts';
+type TabType = 'manage' | 'bulkUpdate' | 'single' | 'gallery' | 'contact' | 'users' | 'ai-documents' | 'auth-accounts' | 'reunion' | 'rewind';
 
 // Helper function to parse CSV line (handles quoted values with commas)
 function parseCSVLine(line: string): string[] {
@@ -59,7 +63,7 @@ export default function AdminPanel() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab') as TabType;
-      if (tab && ['manage', 'bulkUpdate', 'single', 'gallery', 'contact', 'users', 'ai-documents', 'auth-accounts'].includes(tab)) {
+      if (tab && ['manage', 'bulkUpdate', 'single', 'gallery', 'contact', 'users', 'ai-documents', 'auth-accounts', 'reunion', 'rewind'].includes(tab)) {
         return tab;
       }
     }
@@ -116,211 +120,33 @@ export default function AdminPanel() {
   // Show loading state while checking authorization
   if (authChecking) {
     return (
-      <div className="min-h-screen bg-[#4E2E8C] flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw size={48} className="animate-spin text-brand-yellow mx-auto mb-4" />
-          <p className="text-white text-lg font-semibold">Verifying authorization...</p>
-          <p className="text-white/70 text-sm mt-2">Please wait</p>
+      <div className="min-h-screen bg-[#f6f5fb] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <Loader2 size={28} className="animate-spin text-[#4E2E8C]" />
+          <p className="text-sm font-medium text-neutral-700">Verifying access…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f7ff] via-white to-[#faf5ff] relative overflow-hidden">
-      {/* Ultra-Modern Animated Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        {/* Mesh Gradient Orbs */}
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-
-        {/* Sophisticated Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-      </div>
-
-      <div className="relative min-h-screen flex flex-col">
-        {/* Premium Glassmorphism Header */}
-        <header className="backdrop-blur-xl bg-white/60 border-b border-purple-200/50 sticky top-0 z-50 shadow-[0_8px_32px_0_rgba(78,46,140,0.12)]">
-          <div className="container mx-auto px-6 lg:px-8">
-            <div className="flex items-center justify-between h-24">
-              {/* Modern Logo & Title */}
-              <div className="flex items-center gap-5">
-                <div className="relative group">
-                  {/* Floating Logo with Glow Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] to-[#7C3AED] rounded-2xl blur-md opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] flex items-center justify-center shadow-xl transform group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-white font-black text-2xl tracking-tight">K</span>
-                  </div>
-
-                </div>
-                <div className="space-y-1">
-                  <h1 className="text-2xl font-black bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] bg-clip-text text-transparent tracking-tight">Kenavo Admin</h1>
-                  <p className="text-sm font-medium text-neutral-600">Premium Management Dashboard</p>
-                </div>
-              </div>
-
-              {/* Sophisticated User Actions */}
-              <div className="flex items-center gap-4">
-                {/* Modern Sign Out Button */}
-                <button
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="group relative flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] text-white font-semibold text-sm shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-300 overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <LogOut size={18} className="relative z-10" />
-                  <span className="relative z-10">{loggingOut ? 'Signing out...' : 'Sign Out'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content Area */}
-        <div className="flex-1 container mx-auto px-6 lg:px-8 py-10">
-          {/* Ultra-Modern Tab Navigation */}
-          <nav className="mb-10">
-            <div className="relative backdrop-blur-md bg-white/80 p-2 rounded-2xl border border-purple-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-x-auto">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveTab('manage')}
-                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                    activeTab === 'manage'
-                      ? 'text-white'
-                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
-                  }`}
-                >
-                  {activeTab === 'manage' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
-                  )}
-                  <List size={18} className="relative z-10" />
-                  <span className="relative z-10">Profiles</span>
-                  {activeTab === 'manage' && (
-                    <div className="absolute inset-0 rounded-xl bg-white/20 animate-pulse"></div>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('bulkUpdate')}
-                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                    activeTab === 'bulkUpdate'
-                      ? 'text-white'
-                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
-                  }`}
-                >
-                  {activeTab === 'bulkUpdate' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
-                  )}
-                  <Upload size={18} className="relative z-10" />
-                  <span className="relative z-10">Import</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('single')}
-                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                    activeTab === 'single'
-                      ? 'text-white'
-                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
-                  }`}
-                >
-                  {activeTab === 'single' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
-                  )}
-                  <UserPlus size={18} className="relative z-10" />
-                  <span className="relative z-10">Create</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('gallery')}
-                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                    activeTab === 'gallery'
-                      ? 'text-white'
-                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
-                  }`}
-                >
-                  {activeTab === 'gallery' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
-                  )}
-                  <ImageIcon size={18} className="relative z-10" />
-                  <span className="relative z-10">Gallery</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('contact')}
-                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                    activeTab === 'contact'
-                      ? 'text-white'
-                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
-                  }`}
-                >
-                  {activeTab === 'contact' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
-                  )}
-                  <Mail size={18} className="relative z-10" />
-                  <span className="relative z-10">Messages</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('users')}
-                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                    activeTab === 'users'
-                      ? 'text-white'
-                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
-                  }`}
-                >
-                  {activeTab === 'users' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
-                  )}
-                  <Users size={18} className="relative z-10" />
-                  <span className="relative z-10">Users</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('ai-documents')}
-                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                    activeTab === 'ai-documents'
-                      ? 'text-white'
-                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
-                  }`}
-                >
-                  {activeTab === 'ai-documents' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
-                  )}
-                  <Sparkles size={18} className="relative z-10" />
-                  <span className="relative z-10">AI Docs</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('auth-accounts')}
-                  className={`group relative flex items-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                    activeTab === 'auth-accounts'
-                      ? 'text-white'
-                      : 'text-neutral-700 hover:text-[#4E2E8C] hover:bg-purple-50/50'
-                  }`}
-                >
-                  {activeTab === 'auth-accounts' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#4E2E8C] via-[#6D28D9] to-[#7C3AED] rounded-xl shadow-lg"></div>
-                  )}
-                  <ShieldCheck size={18} className="relative z-10" />
-                  <span className="relative z-10">Logins</span>
-                </button>
-              </div>
-            </div>
-          </nav>
-
-          {/* Premium Content Card with Glassmorphism */}
-          <main className="relative backdrop-blur-md bg-white/70 rounded-3xl border border-purple-200/50 shadow-[0_20px_70px_-15px_rgba(78,46,140,0.3)] overflow-hidden">
-            {/* Subtle Inner Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-transparent to-white/50 pointer-events-none"></div>
-
-            <div className="relative p-10">
-              {activeTab === 'manage' && <ManageProfilesTab />}
-              {activeTab === 'bulkUpdate' && <BulkUpdateTab />}
-              {activeTab === 'single' && <SingleProfileForm />}
-              {activeTab === 'gallery' && <GalleryManagementTab />}
-              {activeTab === 'contact' && <ContactSubmissionsTab />}
-              {activeTab === 'users' && <UserManagementTab />}
-              {activeTab === 'ai-documents' && <AIDocumentsTab />}
-              {activeTab === 'auth-accounts' && <AuthAccountsTab />}
-            </div>
-          </main>
-        </div>
-      </div>
-    </div>
+    <AdminShell
+      activeTab={activeTab}
+      onTabChange={(id) => setActiveTab(id as TabType)}
+      onLogout={handleLogout}
+      loggingOut={loggingOut}
+    >
+      {activeTab === 'manage' && <ManageProfilesTab />}
+      {activeTab === 'bulkUpdate' && <BulkUpdateTab />}
+      {activeTab === 'single' && <SingleProfileForm />}
+      {activeTab === 'gallery' && <GalleryManagementTab />}
+      {activeTab === 'contact' && <ContactSubmissionsTab />}
+      {activeTab === 'users' && <UserManagementTab />}
+      {activeTab === 'ai-documents' && <AIDocumentsTab />}
+      {activeTab === 'auth-accounts' && <AuthAccountsTab />}
+      {activeTab === 'reunion' && <ReunionPageEditorTab />}
+      {activeTab === 'rewind' && <RewindPageEditorTab />}
+    </AdminShell>
   );
 }
 
@@ -384,18 +210,17 @@ function ManageProfilesTab() {
   return (
     <div className="space-y-6">
       {/* Professional Header */}
-      <div className="flex items-center justify-between pb-6 border-b-2 border-neutral-200">
+      <div className="flex items-center justify-between pb-6 border-b border-neutral-200">
         <div>
           <h2 className="text-2xl font-bold text-[#4E2E8C] tracking-tight">Profile Management</h2>
           <p className="text-neutral-600 text-sm mt-1">{totalCount} profiles in database</p>
         </div>
         <button
           onClick={fetchProfiles}
-          className="group relative px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] text-white text-sm font-bold transition-all duration-300 flex items-center gap-2.5 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] transition-colors"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <RefreshCw size={16} className="relative z-10 group-hover:rotate-180 transition-transform duration-500" />
-          <span className="hidden sm:inline relative z-10">Refresh</span>
+          <RefreshCw size={16} />
+          <span className="hidden sm:inline">Refresh</span>
         </button>
       </div>
 
@@ -412,7 +237,7 @@ function ManageProfilesTab() {
                 setSearchTerm(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-11 pr-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+              className="w-full pl-11 pr-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             />
           </div>
         </div>
@@ -422,7 +247,7 @@ function ManageProfilesTab() {
             setYearFilter(e.target.value);
             setPage(1);
           }}
-          className="px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm cursor-pointer transition-all shadow-sm hover:bg-neutral-50"
+          className="px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm cursor-pointer transition-all hover:bg-neutral-50"
         >
           <option value="">All Years</option>
           <option value="2005">2005</option>
@@ -436,24 +261,24 @@ function ManageProfilesTab() {
 
       {/* Profile List with Enhanced Cards */}
       {loading ? (
-        <div className="text-neutral-600 text-center py-16 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-neutral-600 text-center py-16 bg-neutral-50 rounded-lg border border-neutral-200">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-neutral-200 border-t-brand-green mb-4"></div>
           <p className="text-sm font-medium">Loading profiles...</p>
         </div>
       ) : profiles.length === 0 ? (
-        <div className="text-neutral-600 text-center py-16 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-neutral-600 text-center py-16 bg-neutral-50 rounded-lg border border-neutral-200">
           <p className="text-sm font-medium text-[#4E2E8C]">No profiles found</p>
           <p className="text-xs text-neutral-500 mt-1">Try adjusting your search filters</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white overflow-hidden">
           {profiles.map((profile) => (
             <div
               key={profile.id}
-              className="bg-white rounded-xl p-4 flex items-center justify-between hover:bg-[#4E2E8C]/5 transition-all duration-200 border-2 border-neutral-200 hover:border-[#4E2E8C] group shadow-sm hover:shadow-md"
+              className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-[#4E2E8C]/5 transition-colors"
             >
               <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="w-14 h-14 rounded-lg overflow-hidden bg-neutral-100 flex-shrink-0 ring-2 ring-neutral-200 group-hover:ring-[#4E2E8C] transition-all">
+                <div className="w-11 h-11 rounded-lg overflow-hidden bg-neutral-100 flex-shrink-0">
                   <img
                     src={profile.profile_image_url || '/placeholder-profile.svg'}
                     alt={profile.name}
@@ -465,8 +290,8 @@ function ManageProfilesTab() {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[#4E2E8C] font-semibold text-base truncate group-hover:text-[#5E3E9C] transition-colors">{profile.name}</h3>
-                  <p className="text-neutral-600 text-sm truncate mt-0.5">
+                  <h3 className="text-neutral-900 font-medium text-base truncate">{profile.name}</h3>
+                  <p className="text-neutral-500 text-xs truncate mt-0.5">
                     {profile.year_graduated && <span className="font-medium text-[#4E2E8C]">{profile.year_graduated}</span>}
                     {profile.location && <span> · {profile.location}</span>}
                     {profile.designation_organisation && <span> · {profile.designation_organisation}</span>}
@@ -475,11 +300,10 @@ function ManageProfilesTab() {
               </div>
               <button
                 onClick={() => handleEdit(profile)}
-                className="group relative px-4 py-2 rounded-xl bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] text-white text-sm font-bold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] transition-colors"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <Edit2 size={16} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                <span className="hidden sm:inline relative z-10">Edit</span>
+                <Edit2 size={16} />
+                <span className="hidden sm:inline">Edit</span>
               </button>
             </div>
           ))}
@@ -488,16 +312,15 @@ function ManageProfilesTab() {
 
       {/* Enhanced Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 pt-6 mt-6 border-t-2 border-neutral-200">
+        <div className="flex items-center justify-center gap-3 pt-6 mt-6 border-t border-neutral-200">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="group relative px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] text-white text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+            className="inline-flex items-center rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <span className="relative z-10">Previous</span>
+            <span>Previous</span>
           </button>
-          <div className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-[#4E2E8C] shadow-md">
+          <div className="px-5 py-2.5 rounded-lg bg-[#4E2E8C]/5 border border-[#4E2E8C]/30">
             <span className="text-[#4E2E8C] font-bold text-sm">{page}</span>
             <span className="text-neutral-500 text-sm mx-1.5">/</span>
             <span className="text-[#4E2E8C] text-sm font-semibold">{totalPages}</span>
@@ -505,10 +328,9 @@ function ManageProfilesTab() {
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="group relative px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] text-white text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+            className="inline-flex items-center rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <span className="relative z-10">Next</span>
+            <span>Next</span>
           </button>
         </div>
       )}
@@ -664,18 +486,18 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border-2 border-neutral-200 shadow-2xl">
-        <div className="flex justify-between items-start mb-6 pb-6 border-b-2 border-neutral-200">
+    <div className="fixed inset-0 bg-neutral-900/50 flex items-center justify-center z-50 p-4 overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-white rounded-xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-neutral-200 shadow-2xl">
+        <div className="flex justify-between items-start mb-6 pb-6 border-b border-neutral-200">
           <div>
             <h2 className="text-2xl font-bold text-[#4E2E8C] tracking-tight">Edit Profile</h2>
             <p className="text-brand-yellow font-semibold mt-1 text-base bg-[#4E2E8C] px-3 py-1 rounded-md inline-block">{profile.name}</p>
           </div>
           <button
             onClick={onClose}
-            className="group relative text-neutral-400 hover:text-white backdrop-blur-md bg-neutral-100/50 hover:bg-gradient-to-r hover:from-[#4E2E8C] hover:to-[#6D28D9] transition-all duration-300 p-2.5 rounded-xl shadow-md hover:shadow-lg hover:scale-110"
+            className="text-neutral-400 hover:text-white bg-neutral-100 hover:bg-[#4E2E8C] p-2.5 rounded-lg transition-colors"
           >
-            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+            <X size={24} />
           </button>
         </div>
 
@@ -685,14 +507,13 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
             <label className="block text-[#4E2E8C] font-semibold text-sm">Profile Image</label>
             <div className="flex items-center gap-5">
               {imagePreview && (
-                <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-[#4E2E8C] bg-neutral-100 shadow-md">
+                <div className="w-24 h-24 rounded-lg overflow-hidden border border-[#4E2E8C] bg-neutral-100">
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" style={{ objectPosition: 'center top' }} />
                 </div>
               )}
-              <label className="group relative cursor-pointer bg-gradient-to-r from-brand-yellow to-accent-400 text-[#4E2E8C] px-5 py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center gap-2.5 text-sm shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-accent-400 to-accent-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <Upload size={18} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                <span className="relative z-10">{imageFile ? 'Change Image' : 'Upload Image'}</span>
+              <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-brand-yellow px-4 py-2 text-sm font-semibold text-[#4E2E8C] hover:bg-accent-400 transition-colors">
+                <Upload size={18} />
+                <span>{imageFile ? 'Change Image' : 'Upload Image'}</span>
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
               </label>
             </div>
@@ -708,7 +529,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
               />
             </div>
 
@@ -719,7 +540,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
               />
             </div>
 
@@ -730,7 +551,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
               />
             </div>
 
@@ -741,7 +562,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
               />
             </div>
 
@@ -752,7 +573,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                 name="year_graduated"
                 value={formData.year_graduated}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
               />
             </div>
 
@@ -763,7 +584,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                 name="current_job"
                 value={formData.current_job}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
               />
             </div>
 
@@ -774,7 +595,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                 name="company"
                 value={formData.company}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
               />
             </div>
 
@@ -785,7 +606,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                 name="nicknames"
                 value={formData.nicknames}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
               />
             </div>
           </div>
@@ -798,7 +619,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
               value={formData.linkedin_url}
               onChange={handleInputChange}
               placeholder="https://linkedin.com/in/username"
-              className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+              className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             />
           </div>
 
@@ -810,16 +631,16 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
               onChange={handleInputChange}
               rows={3}
               placeholder="Tell us about yourself..."
-              className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm resize-none transition-all shadow-sm"
+              className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm resize-none transition-all"
             />
           </div>
 
           {/* Q&A Section with Enhanced Design */}
-          <div className="border-t-2 border-neutral-200 pt-6">
+          <div className="border-t border-neutral-200 pt-6">
             <h3 className="text-xl font-bold text-[#4E2E8C] mb-4 tracking-tight">Q&A Answers</h3>
             {loadingQA ? (
               <div className="text-neutral-600 text-sm flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-neutral-200 border-t-brand-green rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border border-neutral-200 border-t-brand-green rounded-full animate-spin"></div>
                 Loading questions...
               </div>
             ) : (
@@ -831,7 +652,7 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
                       value={getAnswer(question.id)}
                       onChange={(e) => handleQAChange(question.id, e.target.value)}
                       rows={2}
-                      className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm resize-none transition-all shadow-sm"
+                      className="w-full px-4 py-2.5 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm resize-none transition-all"
                       placeholder="Enter answer..."
                     />
                   </div>
@@ -843,10 +664,10 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
           {/* Enhanced Status Message */}
           {message && (
             <div
-              className={`flex items-center gap-3 p-4 rounded-xl text-sm font-medium shadow-md ${
+              className={`flex items-center gap-3 p-4 rounded-lg text-sm font-medium ${
                 message.type === 'success'
-                  ? 'bg-green-50 text-green-700 border-2 border-green-200'
-                  : 'bg-red-50 text-red-700 border-2 border-red-200'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
               }`}
             >
               {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
@@ -855,22 +676,21 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
           )}
 
           {/* Professional Action Buttons */}
-          <div className="flex gap-3 pt-6 border-t-2 border-neutral-200">
+          <div className="flex gap-3 pt-6 border-t border-neutral-200">
             <button
               type="submit"
               disabled={loading}
-              className="group relative flex-1 bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-2.5 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[#4E2E8C] px-6 py-3 text-base font-semibold text-white hover:bg-[#3d2370] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               {loading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin relative z-10"></div>
-                  <span className="relative z-10">Saving Changes...</span>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Saving Changes...</span>
                 </>
               ) : (
                 <>
-                  <Save size={18} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                  <span className="relative z-10">Save Changes</span>
+                  <Save size={18} />
+                  <span>Save Changes</span>
                 </>
               )}
             </button>
@@ -878,9 +698,9 @@ function EditProfileModal({ profile, onClose }: { profile: Profile; onClose: () 
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="group relative px-6 py-3 rounded-xl backdrop-blur-md bg-white/80 hover:bg-white text-[#4E2E8C] font-bold text-base transition-all duration-300 border-2 border-neutral-200 hover:border-[#4E2E8C] disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-105"
+              className="px-6 py-3 rounded-lg bg-white hover:bg-neutral-50 text-[#4E2E8C] font-semibold text-base transition-colors border border-neutral-200 hover:border-[#4E2E8C] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span className="relative z-10">Cancel</span>
+              <span>Cancel</span>
             </button>
           </div>
         </form>
@@ -1386,321 +1206,151 @@ function BulkUpdateTab() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="pb-6 border-b-2 border-neutral-200">
-        <h2 className="text-2xl font-bold text-[#4E2E8C] tracking-tight">Import & Update Data</h2>
-        <p className="text-neutral-600 text-sm mt-1">Manage profiles, images, and Q&A data in bulk</p>
+      <div className="border-b border-neutral-200 pb-5">
+        <h2 className="text-2xl font-bold tracking-tight text-[#4E2E8C]">Import &amp; Update Data</h2>
+        <p className="mt-1 text-sm text-neutral-600">
+          Bring profiles, Q&amp;A, emails and photos into the directory in bulk.
+        </p>
       </div>
 
-      {/* Info Box */}
-      <div className="bg-[#4E2E8C]/10 border-2 border-[#4E2E8C] rounded-xl p-6 shadow-md">
-        <p className="font-semibold mb-3 text-[#4E2E8C] text-base">📋 This tab contains:</p>
-        <ul className="list-disc list-inside space-y-2 text-sm text-neutral-700">
-          <li><strong className="text-[#4E2E8C]">Import Profiles & Q&A:</strong> Upload complete slambook CSV (creates/updates profiles with Q&A answers)</li>
-          <li><strong className="text-[#4E2E8C]">Update Profile Data:</strong> Bulk update specific profile fields using CSV with IDs</li>
-          <li><strong className="text-[#4E2E8C]">Bulk Image Upload:</strong> Upload profile pictures via ZIP file</li>
-        </ul>
-      </div>
-
-      {/* Instructions */}
-      <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 shadow-md">
-        <p className="font-semibold mb-3 text-blue-800 text-base">🔄 Update Existing Profiles Only:</p>
-        <ol className="list-decimal list-inside space-y-2 text-sm text-blue-700">
-          <li>Download template or export current profiles</li>
-          <li>Edit the CSV file with new data (keep the "id" column!)</li>
-          <li>Upload the modified CSV to update profiles in bulk</li>
-        </ol>
-        <div className="mt-4 pt-4 border-t-2 border-blue-200">
-          <p className="text-sm text-blue-700">
-            📝 <strong>Note:</strong> This updates profile data only (name, email, job, etc.).
-            Profile pictures are preserved. To change images, use <strong>"Bulk Image Upload"</strong> below.
-          </p>
+      {/* Templates & exports */}
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 sm:p-6">
+        <h3 className="text-sm font-semibold text-neutral-900">Templates &amp; exports</h3>
+        <p className="mt-0.5 text-sm text-neutral-500">
+          Download a CSV to fill in, or export current data to edit and re-upload.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button onClick={handleExportProfiles} disabled={exportLoading} className={OUTLINE_BTN_CLS}>
+            <Download size={16} />
+            {exportLoading ? 'Exporting…' : 'Export profiles'}
+          </button>
+          <button onClick={downloadBulkUpdateTemplate} className={OUTLINE_BTN_CLS}>
+            <FileSpreadsheet size={16} />
+            Update template
+          </button>
+          <button onClick={exportProfileIds} className={OUTLINE_BTN_CLS}>
+            <Download size={16} />
+            Export profile IDs
+          </button>
         </div>
-      </div>
+      </section>
 
-      {/* Action Buttons - More Prominent */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <button
-          onClick={handleExportProfiles}
-          disabled={exportLoading}
-          className="group relative bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] disabled:opacity-50 text-white px-6 py-4 rounded-xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2 overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          {exportLoading ? (
-            <span className="relative z-10">Exporting...</span>
-          ) : (
-            <>
-              <span className="text-xl relative z-10">📥</span>
-              <span className="relative z-10">Download Template</span>
-            </>
-          )}
-        </button>
-        <button
-          onClick={downloadBulkUpdateTemplate}
-          className="group relative bg-gradient-to-r from-brand-yellow to-accent-400 text-[#4E2E8C] px-6 py-4 rounded-xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2 overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-accent-400 to-accent-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <span className="text-xl relative z-10">📋</span>
-          <span className="relative z-10">Download Template</span>
-        </button>
-        <button
-          onClick={exportProfileIds}
-          className="group relative backdrop-blur-md bg-white/80 hover:bg-white text-[#4E2E8C] border-2 border-[#4E2E8C] px-6 py-4 rounded-xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2"
-        >
-          <span className="text-xl relative z-10">🆔</span>
-          <span className="relative z-10">Export Profile IDs</span>
-        </button>
-      </div>
-
-      {/* Import Profiles & Q&A Section */}
-      <div className="border-t-2 border-neutral-200 pt-8">
-        <h3 className="text-2xl font-bold text-[#4E2E8C] mb-6">📥 Import Profiles & Q&A (CSV Upload)</h3>
-
-        <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 shadow-md mb-6">
-          <p className="font-semibold mb-3 text-green-800 text-base">✨ Smart Single-File Upload:</p>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-green-700">
-            <li>Upload your original slambook CSV file (17 columns: 7 profile fields + 10 Q&A answers)</li>
-            <li>System automatically <strong>matches existing profiles by name + graduation year</strong></li>
-            <li>Updates existing profiles or creates new ones as needed</li>
-            <li>Q&A answers are refreshed (old answers replaced with new ones)</li>
-          </ol>
-          <div className="mt-4 pt-4 border-t-2 border-green-200">
-            <p className="text-sm text-green-700">
-              ℹ️ <strong>Expected format:</strong> S.No, Full Name, Nickname, Address, Job, Tenure, Company, + 10 Q&A columns
-            </p>
-            <p className="text-sm text-green-700 mt-2">
-              🔍 <strong>Matching:</strong> Profiles are matched by normalized name (case-insensitive, whitespace-tolerant) + year graduated
-            </p>
-          </div>
-        </div>
-
+      {/* Import profiles & Q&A */}
+      <ImportCard
+        icon={FileSpreadsheet}
+        title="Import profiles & Q&A"
+        description="Upload the full slambook CSV. Matches by name + year, then creates or updates profiles and refreshes Q&A."
+      >
+        <ImportNote>
+          <ul className="list-disc space-y-1 pl-4">
+            <li>17 columns: 7 profile fields + 10 Q&amp;A answers.</li>
+            <li>Matched by normalized name (case-insensitive) + year graduated.</li>
+            <li>Existing Q&amp;A answers are replaced with the new ones.</li>
+          </ul>
+        </ImportNote>
         <form onSubmit={handleSlambookUpload} className="space-y-4">
           <div>
-            <label className="block text-[#4E2E8C] font-semibold mb-2 text-sm">Upload Profiles & Q&A CSV File</label>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleSlambookFileChange}
-              className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#4E2E8C] file:text-white file:cursor-pointer hover:file:bg-primary-700 shadow-sm transition-all"
-            />
-            {slambookFile && <p className="text-neutral-600 mt-2 text-sm">Selected: {slambookFile.name}</p>}
+            <label className={FIELD_LABEL_CLS}>Slambook CSV</label>
+            <input type="file" accept=".csv" onChange={handleSlambookFileChange} className={FILE_INPUT_CLS} />
+            {slambookFile && <p className="mt-2 text-sm text-neutral-500">Selected: {slambookFile.name}</p>}
           </div>
-
-          {slambookMessage && (
-            <div
-              className={`flex items-start gap-3 p-4 rounded-xl border-2 shadow-sm ${
-                slambookMessage.type === 'success'
-                  ? 'bg-green-50 text-green-700 border-green-200'
-                  : slambookMessage.type === 'warning'
-                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                  : 'bg-red-50 text-red-700 border-red-200'
-              }`}
-            >
-              {slambookMessage.type === 'success' ? (
-                <CheckCircle size={20} className="mt-0.5 flex-shrink-0" />
-              ) : slambookMessage.type === 'warning' ? (
-                <AlertCircle size={20} className="mt-0.5 flex-shrink-0" />
-              ) : (
-                <AlertCircle size={20} className="mt-0.5 flex-shrink-0" />
-              )}
-              <span className="whitespace-pre-line text-sm leading-relaxed flex-1">{slambookMessage.text}</span>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={slambookLoading || !slambookFile}
-            className="group relative w-full bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-5 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            {slambookLoading ? (
-              <>
-                <RefreshCw className="animate-spin relative z-10" size={22} />
-                <span className="relative z-10">Processing CSV...</span>
-              </>
-            ) : (
-              <>
-                <Upload size={22} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                <span className="relative z-10">Upload & Process Slambook CSV</span>
-              </>
-            )}
+          {slambookMessage && <ImportStatus message={slambookMessage} />}
+          <button type="submit" disabled={slambookLoading || !slambookFile} className={PRIMARY_BTN_CLS}>
+            {slambookLoading ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
+            {slambookLoading ? 'Processing…' : 'Upload & process'}
           </button>
         </form>
-      </div>
+      </ImportCard>
 
-      {/* ── Email Sync from Slambook CSV ─────────────────────────────────── */}
-      <div className="border-t-2 border-neutral-200 pt-8">
-        <h3 className="text-2xl font-bold text-[#4E2E8C] mb-2">📧 Sync Emails from Slambook CSV</h3>
-        <p className="text-sm text-neutral-500 mb-6">
-          Matches each row by <strong>Full Name</strong> and updates <strong>only email &amp; phone</strong> on the matched profile.
-          No other data is changed. Safe to run multiple times.
-        </p>
-        <form onSubmit={handleEmailSyncUpload} className="space-y-5">
+      {/* Sync emails */}
+      <ImportCard
+        icon={Mail}
+        title="Sync emails & phone"
+        description="Matches each row by full name and updates only email & phone. Safe to run repeatedly."
+      >
+        <form onSubmit={handleEmailSyncUpload} className="space-y-4">
           <div>
-            <label className="block text-[#4E2E8C] font-semibold mb-2 text-sm">Upload Slambook CSV (Col R = Email)</label>
+            <label className={FIELD_LABEL_CLS}>Slambook CSV (column R = email)</label>
             <input
               type="file"
               accept=".csv"
-              onChange={e => { const f = e.target.files?.[0]; if (f) { setEmailSyncFile(f); setEmailSyncMessage(null); } }}
-              className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-yellow file:text-[#4E2E8C] file:cursor-pointer hover:file:bg-accent-400 shadow-sm transition-all"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) { setEmailSyncFile(f); setEmailSyncMessage(null); } }}
+              className={FILE_INPUT_CLS}
             />
-            {emailSyncFile && <p className="text-neutral-600 mt-2 text-sm">Selected: {emailSyncFile.name}</p>}
+            {emailSyncFile && <p className="mt-2 text-sm text-neutral-500">Selected: {emailSyncFile.name}</p>}
           </div>
-
-          {emailSyncMessage && (
-            <div className={`flex items-start gap-3 p-4 rounded-xl border-2 shadow-sm ${
-              emailSyncMessage.type === 'success' ? 'bg-green-50 text-green-700 border-green-200'
-              : emailSyncMessage.type === 'warning' ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-              : 'bg-red-50 text-red-700 border-red-200'
-            }`}>
-              {emailSyncMessage.type === 'success'
-                ? <CheckCircle size={20} className="mt-0.5 flex-shrink-0" />
-                : <AlertCircle size={20} className="mt-0.5 flex-shrink-0" />}
-              <span className="whitespace-pre-line text-sm leading-relaxed flex-1">{emailSyncMessage.text}</span>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={emailSyncLoading || !emailSyncFile}
-            className="group relative w-full bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            {emailSyncLoading ? (
-              <><RefreshCw className="animate-spin relative z-10" size={20} /><span className="relative z-10">Syncing emails...</span></>
-            ) : (
-              <><Upload size={20} className="relative z-10" /><span className="relative z-10">Sync Emails to Profiles</span></>
-            )}
+          {emailSyncMessage && <ImportStatus message={emailSyncMessage} />}
+          <button type="submit" disabled={emailSyncLoading || !emailSyncFile} className={PRIMARY_BTN_CLS}>
+            {emailSyncLoading ? <RefreshCw size={16} className="animate-spin" /> : <Mail size={16} />}
+            {emailSyncLoading ? 'Syncing…' : 'Sync emails'}
           </button>
         </form>
-      </div>
+      </ImportCard>
 
-      <div className="border-t-2 border-neutral-200 pt-8">
-        <h3 className="text-2xl font-bold text-[#4E2E8C] mb-6">✏️ Update Existing Profiles</h3>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Update existing profiles */}
+      <ImportCard
+        icon={Upload}
+        title="Update existing profiles"
+        description="Upload an edited CSV (keep the id column). Updates fields only — profile photos are preserved."
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[#4E2E8C] font-semibold mb-2 text-sm">Upload Updated CSV</label>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileChange}
-              className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-yellow file:text-[#4E2E8C] file:cursor-pointer hover:file:bg-accent-400 shadow-sm transition-all"
-            />
-            {csvFile && <p className="text-neutral-600 mt-2 text-sm">Selected: {csvFile.name}</p>}
+            <label className={FIELD_LABEL_CLS}>Updated CSV</label>
+            <input type="file" accept=".csv" onChange={handleFileChange} className={FILE_INPUT_CLS} />
+            {csvFile && <p className="mt-2 text-sm text-neutral-500">Selected: {csvFile.name}</p>}
           </div>
-
-          {message && (
-            <div
-              className={`flex items-center gap-3 p-4 rounded-xl border-2 shadow-sm ${
-                message.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
-              }`}
-            >
-              {message.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-              <span className="text-sm">{message.text}</span>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || !csvFile}
-            className="group relative w-full bg-gradient-to-r from-brand-yellow to-accent-400 disabled:opacity-50 disabled:cursor-not-allowed text-[#4E2E8C] px-8 py-5 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-accent-400 to-accent-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            {loading ? (
-              <>
-                <RefreshCw className="animate-spin relative z-10" size={22} />
-                <span className="relative z-10">Updating Profiles...</span>
-              </>
-            ) : (
-              <>
-                <Upload size={22} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                <span className="relative z-10">Update Profiles from CSV</span>
-              </>
-            )}
+          {message && <ImportStatus message={message} />}
+          <button type="submit" disabled={loading || !csvFile} className={PRIMARY_BTN_CLS}>
+            {loading ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
+            {loading ? 'Updating…' : 'Update profiles'}
           </button>
         </form>
-      </div>
+      </ImportCard>
 
-      {/* Bulk Image Upload Section */}
-      <div className="border-t-2 border-neutral-200 pt-8">
-        <h3 className="text-2xl font-bold text-[#4E2E8C] mb-6">📸 Bulk Image Upload</h3>
-
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 shadow-md mb-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <p className="font-semibold mb-3 text-yellow-800 text-base">How to upload profile images in bulk:</p>
-              <ol className="list-decimal list-inside space-y-2 text-sm text-yellow-700">
-                <li>Prepare images with filenames as profile IDs (e.g., 123.jpg, 456.png)</li>
-                <li>Create a ZIP file containing all profile images</li>
-                <li>Upload the ZIP file and preview the mappings</li>
-                <li>Confirm to upload and update all profiles at once</li>
-              </ol>
-              <p className="text-sm mt-4 text-yellow-700 font-medium">
-                💡 Supported formats: JPG, PNG, WEBP | Max size: 5MB per image |
-                Filenames: {'{'}id{'}'}. jpg (e.g., 123.jpg or 123-john-doe.png)
-              </p>
-            </div>
-            <button
-              onClick={downloadImageGuide}
-              className="ml-4 bg-brand-yellow hover:bg-accent-400 text-[#4E2E8C] px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap shadow-sm hover:shadow-md"
-            >
-              📖 Full Guide
-            </button>
-          </div>
+      {/* Bulk image upload */}
+      <ImportCard
+        icon={ImageIcon}
+        title="Bulk image upload"
+        description="Upload a ZIP of images named by profile ID (e.g. 123.jpg), preview the matches, then apply."
+      >
+        <ImportNote>
+          <ul className="list-disc space-y-1 pl-4">
+            <li>Filenames: {'{'}id{'}'}.jpg — e.g. 123.jpg or 123-john-doe.png.</li>
+            <li>Formats: JPG, PNG, WEBP. Max 5MB per image.</li>
+          </ul>
+          <button
+            type="button"
+            onClick={downloadImageGuide}
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#4E2E8C] hover:underline"
+          >
+            <Download size={14} /> Download full guide
+          </button>
+        </ImportNote>
+        <div>
+          <label className={FIELD_LABEL_CLS}>Images ZIP</label>
+          <input
+            id="zip-file-input"
+            type="file"
+            accept=".zip"
+            onChange={handleZipFileChange}
+            disabled={imageLoading}
+            className={FILE_INPUT_CLS}
+          />
+          {zipFile && (
+            <p className="mt-2 text-sm text-neutral-500">
+              Selected: {zipFile.name} ({(zipFile.size / 1024 / 1024).toFixed(2)} MB)
+            </p>
+          )}
         </div>
+        {imageMessage && <ImportStatus message={imageMessage} />}
+        <button type="button" onClick={handleZipUpload} disabled={imageLoading || !zipFile} className={PRIMARY_BTN_CLS}>
+          {imageLoading ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
+          {imageLoading ? 'Processing…' : 'Preview mappings'}
+        </button>
+      </ImportCard>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-[#4E2E8C] font-semibold mb-2 text-sm">Upload ZIP File with Images</label>
-            <input
-              id="zip-file-input"
-              type="file"
-              accept=".zip"
-              onChange={handleZipFileChange}
-              disabled={imageLoading}
-              className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#4E2E8C] file:text-white file:cursor-pointer hover:file:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
-            />
-            {zipFile && (
-              <p className="text-neutral-600 mt-2 text-sm">
-                Selected: {zipFile.name} ({(zipFile.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
-            )}
-          </div>
-
-          {imageMessage && (
-            <div
-              className={`flex items-center gap-3 p-4 rounded-xl border-2 shadow-sm ${
-                imageMessage.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
-              }`}
-            >
-              {imageMessage.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-              <span className="text-sm">{imageMessage.text}</span>
-            </div>
-          )}
-
-          <button
-            onClick={handleZipUpload}
-            disabled={imageLoading || !zipFile}
-            className="group relative w-full bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-5 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            {imageLoading ? (
-              <>
-                <RefreshCw className="animate-spin relative z-10" size={22} />
-                <span className="relative z-10">Processing ZIP File...</span>
-              </>
-            ) : (
-              <>
-                <Upload size={22} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                <span className="relative z-10">Preview Image Mappings</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Preview Modal */}
       <BulkImagePreviewModal
         mappings={previewMappings}
         isOpen={isPreviewOpen}
@@ -1804,11 +1454,11 @@ function SingleProfileForm() {
         <label className="block text-[#4E2E8C] font-semibold text-sm">Profile Image</label>
         <div className="flex items-center gap-5">
           {imagePreview && (
-            <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-[#4E2E8C] bg-neutral-100 shadow-md">
+            <div className="w-24 h-24 rounded-lg overflow-hidden border border-[#4E2E8C] bg-neutral-100">
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" style={{ objectPosition: 'center top' }} />
             </div>
           )}
-          <label className="cursor-pointer bg-brand-yellow hover:bg-accent-400 text-[#4E2E8C] px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 shadow-sm hover:shadow-md">
+          <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-brand-yellow px-6 py-3 font-semibold text-[#4E2E8C] hover:bg-accent-400 transition-colors">
             <Upload size={20} />
             Choose Image
             <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
@@ -1826,7 +1476,7 @@ function SingleProfileForm() {
             value={formData.name}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             placeholder="John Doe"
           />
         </div>
@@ -1838,7 +1488,7 @@ function SingleProfileForm() {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             placeholder="john@example.com"
           />
         </div>
@@ -1850,7 +1500,7 @@ function SingleProfileForm() {
             name="phone"
             value={formData.phone}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             placeholder="+1234567890"
           />
         </div>
@@ -1862,7 +1512,7 @@ function SingleProfileForm() {
             name="location"
             value={formData.location}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             placeholder="New York, USA"
           />
         </div>
@@ -1874,7 +1524,7 @@ function SingleProfileForm() {
             name="year_graduated"
             value={formData.year_graduated}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             placeholder="2010 or 1993-2000"
           />
         </div>
@@ -1886,7 +1536,7 @@ function SingleProfileForm() {
             name="current_job"
             value={formData.current_job}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             placeholder="Software Engineer"
           />
         </div>
@@ -1898,7 +1548,7 @@ function SingleProfileForm() {
             name="company"
             value={formData.company}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             placeholder="Tech Corp"
           />
         </div>
@@ -1910,7 +1560,7 @@ function SingleProfileForm() {
             name="nicknames"
             value={formData.nicknames}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
             placeholder="Johnny, JD"
           />
         </div>
@@ -1923,7 +1573,7 @@ function SingleProfileForm() {
           name="linkedin_url"
           value={formData.linkedin_url}
           onChange={handleInputChange}
-          className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all shadow-sm"
+          className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm transition-all"
           placeholder="https://linkedin.com/in/johndoe"
         />
       </div>
@@ -1935,7 +1585,7 @@ function SingleProfileForm() {
           value={formData.bio}
           onChange={handleInputChange}
           rows={4}
-          className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm resize-none transition-all shadow-sm"
+          className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm resize-none transition-all"
           placeholder="Tell us about yourself..."
         />
       </div>
@@ -1943,7 +1593,7 @@ function SingleProfileForm() {
       {/* Message */}
       {message && (
         <div
-          className={`flex items-center gap-3 p-4 rounded-xl border-2 shadow-sm ${
+          className={`flex items-center gap-3 p-4 rounded-lg border ${
             message.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
           }`}
         >
@@ -1956,10 +1606,9 @@ function SingleProfileForm() {
       <button
         type="submit"
         disabled={loading}
-        className="group relative w-full bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] disabled:opacity-50 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+        className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#4E2E8C] px-8 py-4 text-lg font-semibold text-white hover:bg-[#3d2370] disabled:opacity-50 transition-colors"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <span className="relative z-10">{loading ? 'Creating...' : 'Create Profile'}</span>
+        <span>{loading ? 'Creating...' : 'Create Profile'}</span>
       </button>
     </form>
   );
@@ -2269,7 +1918,7 @@ function AuthAccountsTab() {
   if (fetchError) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <div className="flex items-center gap-3 bg-red-50 border-2 border-red-200 rounded-xl px-6 py-4 max-w-lg w-full">
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-6 py-4 max-w-lg w-full">
           <AlertCircle size={22} className="text-red-600 shrink-0" />
           <div className="flex-1">
             <p className="font-bold text-red-700 text-sm">Failed to load login status</p>
@@ -2278,7 +1927,7 @@ function AuthAccountsTab() {
         </div>
         <button
           onClick={fetchStatus}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-neutral-200 text-neutral-600 hover:border-[#4E2E8C] hover:text-[#4E2E8C] transition-all text-sm font-semibold"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-600 hover:border-[#4E2E8C] hover:text-[#4E2E8C] transition-colors text-sm font-semibold"
         >
           <RefreshCw size={16} />
           Retry
@@ -2290,7 +1939,7 @@ function AuthAccountsTab() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between pb-6 border-b-2 border-neutral-200">
+      <div className="flex items-center justify-between pb-6 border-b border-neutral-200">
         <div>
           <h2 className="text-2xl font-bold text-[#4E2E8C] tracking-tight">Login Account Management</h2>
           <p className="text-neutral-600 text-sm mt-1">
@@ -2300,7 +1949,7 @@ function AuthAccountsTab() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchStatus}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-neutral-200 text-neutral-600 hover:border-[#4E2E8C] hover:text-[#4E2E8C] transition-all text-sm font-semibold"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-600 hover:border-[#4E2E8C] hover:text-[#4E2E8C] transition-colors text-sm font-semibold"
           >
             <RefreshCw size={16} />
             Refresh
@@ -2308,7 +1957,7 @@ function AuthAccountsTab() {
           <button
             onClick={handleBackfill}
             disabled={backfillLoading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4E2E8C] hover:bg-[#3d2370] disabled:opacity-50 text-white transition-all text-sm font-semibold"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4E2E8C] hover:bg-[#3d2370] disabled:opacity-50 text-white transition-colors text-sm font-semibold"
           >
             {backfillLoading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
             {backfillLoading ? 'Granting...' : 'Grant All Access'}
@@ -2329,19 +1978,19 @@ function AuthAccountsTab() {
       {/* Summary Cards */}
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-center">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
             <p className="text-2xl font-black text-blue-700">{summary.gmail}</p>
             <p className="text-xs font-semibold text-blue-600 mt-1">Google OAuth</p>
           </div>
-          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
             <p className="text-2xl font-black text-green-700">{summary.has_login}</p>
             <p className="text-xs font-semibold text-green-600 mt-1">Has Password Login</p>
           </div>
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 text-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
             <p className="text-2xl font-black text-red-700">{summary.no_login}</p>
             <p className="text-xs font-semibold text-red-600 mt-1">Need Login Created</p>
           </div>
-          <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
             <p className="text-2xl font-black text-gray-600">{summary.no_email}</p>
             <p className="text-xs font-semibold text-gray-500 mt-1">No Email on File</p>
           </div>
@@ -2350,7 +1999,7 @@ function AuthAccountsTab() {
 
       {/* Bulk Create Section */}
       {summary && summary.no_login > 0 && (
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6 space-y-4">
+        <div className="bg-amber-50/60 border-l-2 border-amber-300 rounded-r-lg p-4 space-y-4">
           <div className="flex items-center gap-2">
             <KeyRound size={20} className="text-amber-700" />
             <h3 className="font-bold text-amber-800">Bulk Create Accounts ({summary.no_login} needed)</h3>
@@ -2364,12 +2013,12 @@ function AuthAccountsTab() {
               value={bulkPassword}
               onChange={e => setBulkPassword(e.target.value)}
               placeholder="Set password for all accounts..."
-              className="flex-1 px-4 py-2.5 rounded-lg border-2 border-amber-300 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-500 text-sm"
+              className="flex-1 px-4 py-2.5 rounded-lg border border-amber-300 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-500 text-sm"
             />
             <button
               onClick={handleBulkCreate}
               disabled={bulkLoading}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-sm transition-all whitespace-nowrap"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-sm transition-colors whitespace-nowrap"
             >
               {bulkLoading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
               {bulkLoading ? 'Creating...' : 'Create All'}
@@ -2387,7 +2036,7 @@ function AuthAccountsTab() {
       )}
 
       {/* Send Welcome Emails Section */}
-      <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 space-y-4">
+      <div className="bg-blue-50/60 border-l-2 border-blue-300 rounded-r-lg p-4 space-y-4">
         <div className="flex items-center gap-2">
           <Mail size={20} className="text-blue-700" />
           <h3 className="font-bold text-blue-800">Send Welcome Emails</h3>
@@ -2398,7 +2047,7 @@ function AuthAccountsTab() {
         <button
           onClick={handleSendWelcomeEmails}
           disabled={sendEmailLoading}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm transition-all whitespace-nowrap"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm transition-colors whitespace-nowrap"
         >
           {sendEmailLoading ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
           {sendEmailLoading ? 'Sending emails...' : 'Send Welcome Emails'}
@@ -2414,7 +2063,7 @@ function AuthAccountsTab() {
       </div>
 
       {/* Bulk Password Reset Section (destructive) */}
-      <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6 space-y-4">
+      <div className="bg-red-50/60 border-l-2 border-red-400 rounded-r-lg p-4 space-y-4">
         <div className="flex items-center gap-2">
           <AlertCircle size={20} className="text-red-700" />
           <h3 className="font-bold text-red-800">Bulk Password Reset</h3>
@@ -2428,12 +2077,12 @@ function AuthAccountsTab() {
             value={bulkResetPassword}
             onChange={e => setBulkResetPassword(e.target.value)}
             placeholder="New password for all non-admin users..."
-            className="flex-1 px-4 py-2.5 rounded-lg border-2 border-red-300 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-red-500 text-sm"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-red-300 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-red-500 text-sm"
           />
           <button
             onClick={handleBulkReset}
             disabled={bulkResetLoading}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-sm transition-all whitespace-nowrap"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-sm transition-colors whitespace-nowrap"
           >
             {bulkResetLoading ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
             {bulkResetLoading ? 'Resetting...' : 'Reset ALL passwords'}
@@ -2450,10 +2099,10 @@ function AuthAccountsTab() {
       </div>
 
       {/* Per-Profile Table */}
-      <div className="overflow-x-auto rounded-2xl border-2 border-neutral-200">
+      <div className="overflow-x-auto rounded-lg border border-neutral-200">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-neutral-100 border-b-2 border-neutral-200">
+            <tr className="bg-neutral-100 border-b border-neutral-200">
               <th className="text-left px-4 py-3 font-bold text-neutral-700">Name</th>
               <th className="text-left px-4 py-3 font-bold text-neutral-700 hidden md:table-cell">Email</th>
               <th className="text-left px-4 py-3 font-bold text-neutral-700 hidden sm:table-cell">Batch</th>
@@ -2476,12 +2125,12 @@ function AuthAccountsTab() {
                         placeholder="Password..."
                         value={individualPasswords[profile.id] ?? ''}
                         onChange={e => setIndividualPasswords(prev => ({ ...prev, [profile.id]: e.target.value }))}
-                        className="w-32 px-2.5 py-1.5 rounded-lg border-2 border-neutral-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#4E2E8C] text-xs"
+                        className="w-32 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#4E2E8C] text-xs"
                       />
                       <button
                         onClick={() => handleIndividualCreate(profile)}
                         disabled={individualLoading[profile.id]}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#4E2E8C] hover:bg-[#6D28D9] disabled:opacity-50 text-white font-semibold text-xs transition-all whitespace-nowrap"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#4E2E8C] hover:bg-[#6D28D9] disabled:opacity-50 text-white font-semibold text-xs transition-colors whitespace-nowrap"
                       >
                         {individualLoading[profile.id] ? <Loader2 size={12} className="animate-spin" /> : <KeyRound size={12} />}
                         Create
@@ -2504,12 +2153,12 @@ function AuthAccountsTab() {
                         placeholder="New password..."
                         value={individualResetPasswords[profile.id] ?? ''}
                         onChange={e => setIndividualResetPasswords(prev => ({ ...prev, [profile.id]: e.target.value }))}
-                        className="w-32 px-2.5 py-1.5 rounded-lg border-2 border-red-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-red-500 text-xs"
+                        className="w-32 px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-red-500 text-xs"
                       />
                       <button
                         onClick={() => handleIndividualReset(profile)}
                         disabled={individualResetLoading[profile.id]}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-xs transition-all whitespace-nowrap"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-xs transition-colors whitespace-nowrap"
                       >
                         {individualResetLoading[profile.id] ? <Loader2 size={12} className="animate-spin" /> : <KeyRound size={12} />}
                         Reset

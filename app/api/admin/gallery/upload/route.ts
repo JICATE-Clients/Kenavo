@@ -9,12 +9,25 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { protectAdminRoute } from '@/lib/auth/api-protection';
 import {
   uploadGalleryImage,
-  validateGalleryImage,
-  generateGalleryImageFilename,
+  validateGalleryMedia,
 } from '@/lib/gallery-storage-utils';
 import JSZip from 'jszip';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // allow longer processing for video uploads
+
+// Extension → MIME map for files coming out of a ZIP (the entries have no type).
+const ZIP_MIME_BY_EXT: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+  avi: 'video/x-msvideo',
+};
 
 interface UploadResult {
   url: string;
@@ -130,35 +143,35 @@ async function handleZipUpload(
     const zipBuffer = await zipFile.arrayBuffer();
     const zip = await JSZip.loadAsync(zipBuffer);
 
-    // Filter for image files only
-    const imageFiles = Object.keys(zip.files).filter(filename => {
+    // Filter for supported media files only (images + videos)
+    const mediaFiles = Object.keys(zip.files).filter(filename => {
       const ext = filename.split('.').pop()?.toLowerCase();
       return (
         !filename.startsWith('__MACOSX') &&
         !filename.startsWith('.') &&
         ext &&
-        ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) &&
+        ext in ZIP_MIME_BY_EXT &&
         !zip.files[filename].dir
       );
     });
 
-    // Limit to 100 images per ZIP for safety
-    if (imageFiles.length > 100) {
-      throw new Error(`ZIP contains too many images (${imageFiles.length}). Maximum is 100 per upload.`);
+    // Limit to 100 files per ZIP for safety
+    if (mediaFiles.length > 100) {
+      throw new Error(`ZIP contains too many files (${mediaFiles.length}). Maximum is 100 per upload.`);
     }
 
-    // Process each image
-    for (const filename of imageFiles) {
+    // Process each file
+    for (const filename of mediaFiles) {
       try {
         const fileData = await zip.files[filename].async('blob');
         const ext = filename.split('.').pop()?.toLowerCase() || 'jpg';
-        const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+        const mimeType = ZIP_MIME_BY_EXT[ext] || 'image/jpeg';
 
         // Create File object
         const file = new File([fileData], filename, { type: mimeType });
 
         // Validate file
-        const validation = validateGalleryImage(file);
+        const validation = validateGalleryMedia(file);
         if (!validation.valid) {
           results.push({
             url: '',
@@ -218,7 +231,7 @@ async function handleMultiFileUpload(
   for (const file of files) {
     try {
       // Validate file
-      const validation = validateGalleryImage(file);
+      const validation = validateGalleryMedia(file);
       if (!validation.valid) {
         results.push({
           url: '',

@@ -1,17 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Image as ImageIcon, Edit2, Trash2, Star, RefreshCw, GripVertical, CheckSquare, Square, X, CloudDownload } from 'lucide-react';
+import { Image as ImageIcon, Edit2, Trash2, Star, GripVertical, CheckSquare, Square, X, Play } from 'lucide-react';
 import { GalleryAlbum, GalleryImage } from '@/lib/types/gallery';
 import ImageDetailModal from './ImageDetailModal';
 import SetThumbnailModal from './SetThumbnailModal';
+import { isDriveVideoEmbed, isDirectVideo, driveFileIdFromUrl, buildDriveThumbnailUrl } from '@/lib/gallery-media';
 
 interface ImageGalleryViewProps {
   album: GalleryAlbum;
+  refreshKey?: number;
   onUpdate: () => void;
 }
 
-export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewProps) {
+export default function ImageGalleryView({ album, refreshKey, onUpdate }: ImageGalleryViewProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingImage, setEditingImage] = useState<GalleryImage | null>(null);
@@ -24,12 +26,10 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
   const [selectedImages, setSelectedImages] = useState<Set<number>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [deletingImageId, setDeletingImageId] = useState<number | null>(null);
-  const [syncingDrive, setSyncingDrive] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     fetchImages();
-  }, [album.id]);
+  }, [album.id, refreshKey]);
 
   const fetchImages = async () => {
     setLoading(true);
@@ -192,120 +192,59 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
     }
   };
 
-  const handleSyncFromDrive = async () => {
-    setSyncingDrive(true);
-    setSyncResult(null);
-    try {
-      const res = await fetch('/api/admin/gallery/sync-drive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ album_id: album.id }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSyncResult({ type: 'success', text: data.message });
-        if (data.synced > 0) {
-          fetchImages();
-          onUpdate();
-        }
-      } else {
-        setSyncResult({ type: 'error', text: data.error || 'Sync failed' });
-      }
-    } catch (err: any) {
-      setSyncResult({ type: 'error', text: err.message || 'Network error' });
-    } finally {
-      setSyncingDrive(false);
-    }
-  };
-
   const isAllSelected = images.length > 0 && selectedImages.size === images.length;
 
   return (
-    <div className="bg-neutral-50 rounded-lg p-6 border-2 border-neutral-200">
+    <div className="bg-neutral-50 rounded-lg p-6 border border-neutral-200">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-brand-green">
+        <h3 className="text-lg font-bold text-[#4E2E8C]">
           Images ({images.length})
         </h3>
         <div className="flex items-center gap-2">
           {!selectionMode ? (
             <>
-              {album.drive_folder_id && (
-                <button
-                  onClick={handleSyncFromDrive}
-                  disabled={syncingDrive}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800 disabled:cursor-not-allowed text-white text-sm font-semibold transition-all"
-                >
-                  {syncingDrive ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                  ) : (
-                    <CloudDownload size={16} />
-                  )}
-                  {syncingDrive ? 'Syncing…' : 'Sync from Drive'}
-                </button>
-              )}
               <button
                 onClick={toggleSelectionMode}
                 disabled={images.length === 0}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm font-semibold transition-all"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-neutral-200 text-[#4E2E8C] text-sm font-semibold hover:bg-neutral-50 hover:border-[#4E2E8C] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <CheckSquare size={16} />
-                Bulk Actions
+                Select
               </button>
               <button
                 onClick={() => setShowThumbnailModal(true)}
                 disabled={images.length === 0}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-800 disabled:cursor-not-allowed text-white text-sm font-semibold transition-all"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-neutral-200 text-[#4E2E8C] text-sm font-semibold hover:bg-neutral-50 hover:border-[#4E2E8C] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <Star size={16} />
-                Set Thumbnail
-              </button>
-              <button
-                onClick={fetchImages}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-all"
-              >
-                <RefreshCw size={16} />
-                Refresh
+                Set cover
               </button>
             </>
           ) : (
             <button
               onClick={toggleSelectionMode}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-neutral-200 text-neutral-600 text-sm font-semibold hover:bg-neutral-50 transition-colors"
             >
               <X size={16} />
-              Cancel Selection
+              Cancel
             </button>
           )}
         </div>
       </div>
 
-      {/* Drive sync result banner */}
-      {syncResult && (
-        <div className={`mb-4 p-3 rounded-lg text-sm flex items-center justify-between ${
-          syncResult.type === 'success'
-            ? 'bg-emerald-50 border-2 border-emerald-200 text-emerald-800'
-            : 'bg-red-50 border-2 border-red-200 text-red-800'
-        }`}>
-          <span>{syncResult.text}</span>
-          <button onClick={() => setSyncResult(null)} className="ml-3 opacity-60 hover:opacity-100">
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
       {/* Selection mode toolbar */}
       {selectionMode && (
-        <div className="mb-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+        <div className="mb-4 p-4 bg-[#4E2E8C]/5 border border-[#4E2E8C]/20 rounded-lg">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
               <button
                 onClick={isAllSelected ? clearSelection : selectAllImages}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white hover:bg-neutral-50 text-brand-green border-2 border-neutral-200 text-sm font-semibold transition-all"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white hover:bg-neutral-50 text-[#4E2E8C] border border-neutral-200 text-sm font-semibold transition-colors"
               >
                 {isAllSelected ? <Square size={16} /> : <CheckSquare size={16} />}
                 {isAllSelected ? 'Deselect All' : 'Select All'}
               </button>
-              <span className="text-brand-green text-sm font-medium">
+              <span className="text-[#4E2E8C] text-sm font-medium">
                 {selectedImages.size} of {images.length} selected
               </span>
             </div>
@@ -314,14 +253,14 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
               <div className="flex items-center gap-2">
                 <button
                   onClick={clearSelection}
-                  className="px-3 py-2 rounded-lg bg-white hover:bg-neutral-50 text-brand-green border-2 border-neutral-200 text-sm font-semibold transition-all"
+                  className="px-3 py-2 rounded-lg bg-white hover:bg-neutral-50 text-[#4E2E8C] border border-neutral-200 text-sm font-semibold transition-colors"
                 >
                   Clear Selection
                 </button>
                 <button
                   onClick={handleBulkDelete}
                   disabled={bulkDeleting}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white text-sm font-bold transition-all"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors"
                 >
                   {bulkDeleting ? (
                     <>
@@ -342,7 +281,7 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
       )}
 
       {loading ? (
-        <div className="text-center py-10 text-brand-green">
+        <div className="text-center py-10 text-[#4E2E8C]">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-2"></div>
           <p>Loading images...</p>
         </div>
@@ -355,7 +294,7 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
       ) : (
         <>
           {reordering && (
-            <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm border-2 border-blue-200">
+            <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm border border-blue-200">
               Saving new order...
             </div>
           )}
@@ -370,14 +309,14 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
                   onDragStart={() => !selectionMode && handleDragStart(index)}
                   onDragOver={(e) => !selectionMode && handleDragOver(e, index)}
                   onDragEnd={() => !selectionMode && handleDragEnd()}
-                  className={`relative group bg-white rounded-lg overflow-hidden border-2 transition-all ${
+                  className={`relative group bg-white rounded-lg overflow-hidden border transition-colors ${
                     selectionMode
                       ? isSelected
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-neutral-200 hover:border-blue-400 cursor-pointer'
+                        ? 'border-[#4E2E8C] bg-[#4E2E8C]/5'
+                        : 'border-neutral-200 hover:border-[#4E2E8C] cursor-pointer'
                       : draggedIndex === index
-                        ? 'border-brand-green opacity-50 cursor-move'
-                        : 'border-neutral-200 hover:border-brand-green cursor-move'
+                        ? 'border-[#4E2E8C] opacity-50 cursor-move'
+                        : 'border-neutral-200 hover:border-[#4E2E8C] cursor-move'
                   }`}
                   onClick={() => selectionMode && toggleImageSelection(image.id)}
                 >
@@ -385,7 +324,7 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
                   {selectionMode && (
                     <div className="absolute top-2 left-2 z-20">
                       <div className={`w-6 h-6 rounded flex items-center justify-center ${
-                        isSelected ? 'bg-blue-600' : 'bg-white border-2 border-neutral-300'
+                        isSelected ? 'bg-[#4E2E8C]' : 'bg-white border border-neutral-300'
                       }`}>
                         {isSelected && <CheckSquare size={16} className="text-white" />}
                       </div>
@@ -405,7 +344,28 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
                   </div>
 
                   {/* Image or Video */}
-                  {/\.(mp4|mov|webm|avi)$/i.test(image.image_url) ? (
+                  {isDriveVideoEmbed(image.image_url) ? (
+                    // Lightweight poster + play badge (no iframe) so an all-video
+                    // album doesn't mount dozens of heavy Drive players at once.
+                    <div className="relative w-full h-40 bg-neutral-900">
+                      {(() => {
+                        const fileId = driveFileIdFromUrl(image.image_url);
+                        return fileId ? (
+                          <img
+                            src={buildDriveThumbnailUrl(fileId)}
+                            alt={image.caption || `Video ${index + 1}`}
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden'; }}
+                            className="w-full h-40 object-cover pointer-events-none"
+                          />
+                        ) : null;
+                      })()}
+                      <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="flex items-center justify-center w-10 h-10 rounded-full bg-black/60">
+                          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                        </span>
+                      </span>
+                    </div>
+                  ) : isDirectVideo(image.image_url) ? (
                     <video
                       src={image.image_url}
                       muted
@@ -436,7 +396,7 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
                           handleEdit(image);
                         }}
                         disabled={deletingImageId === image.id}
-                        className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg text-white transition-all"
+                        className="p-2 bg-[#4E2E8C] hover:bg-[#3F2570] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
                         title="Edit"
                       >
                         <Edit2 size={18} />
@@ -447,7 +407,7 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
                           handleDelete(image);
                         }}
                         disabled={deletingImageId === image.id}
-                        className="p-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed rounded-lg text-white transition-all"
+                        className="p-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
                         title="Delete"
                       >
                         {deletingImageId === image.id ? (
@@ -461,7 +421,7 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
 
                   {/* Selection Overlay */}
                   {selectionMode && isSelected && (
-                    <div className="absolute inset-0 bg-blue-600/30 pointer-events-none" />
+                    <div className="absolute inset-0 bg-[#4E2E8C]/20 pointer-events-none" />
                   )}
 
                   {/* Active Status */}
@@ -476,14 +436,14 @@ export default function ImageGalleryView({ album, onUpdate }: ImageGalleryViewPr
           </div>
 
           {!selectionMode && (
-            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-200 text-xs">
-              <strong>Tip:</strong> Drag and drop images to reorder them. The order will be saved automatically.
+            <div className="mt-4 p-3 bg-[#4E2E8C]/5 border border-[#4E2E8C]/15 rounded-lg text-neutral-600 text-xs">
+              <strong className="text-neutral-800">Tip:</strong> Drag and drop images to reorder them. The order saves automatically.
             </div>
           )}
 
           {selectionMode && (
-            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-200 text-xs">
-              <strong>Selection Mode:</strong> Click on images to select them, then use the "Delete Selected" button to remove multiple images at once.
+            <div className="mt-4 p-3 bg-[#4E2E8C]/5 border border-[#4E2E8C]/15 rounded-lg text-neutral-600 text-xs">
+              <strong className="text-neutral-800">Selection mode:</strong> Click images to select them, then use Delete selected to remove several at once.
             </div>
           )}
         </>

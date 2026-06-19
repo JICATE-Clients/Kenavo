@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { NextResponse } from 'next/server';
 import { protectAdminRoute } from '@/lib/auth/api-protection';
+import { fillAlbumThumbnails } from '@/lib/gallery-storage-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,11 @@ export async function GET(request: Request) {
       image_count: album.gallery_images?.[0]?.count || 0,
       gallery_images: undefined // Remove the nested array
     })) || [];
+
+    // Drive-synced albums often have no thumbnail_url; derive a poster from each
+    // album's first image (videos resolve to their Drive poster JPEG) so the
+    // admin list shows real covers instead of empty placeholders.
+    await fillAlbumThumbnails(transformedAlbums);
 
     return NextResponse.json({
       albums: transformedAlbums,

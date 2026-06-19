@@ -3,8 +3,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
+interface LightboxItem {
+  src: string;
+  alt: string;
+  kind?: 'image' | 'drive-video' | 'video';
+  embedSrc?: string;
+}
+
 interface ImageLightboxProps {
-  images: Array<{ src: string; alt: string }>;
+  images: LightboxItem[];
   currentIndex: number;
   isOpen: boolean;
   onClose: () => void;
@@ -144,13 +151,33 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <img
-          src={currentImage.src}
-          alt={currentImage.alt}
-          className="max-w-full max-h-full object-contain rounded-lg select-none shadow-2xl"
-          loading="eager"
-          draggable={false}
-        />
+        {currentImage.kind === 'drive-video' ? (
+          <iframe
+            key={currentImage.embedSrc}
+            src={currentImage.embedSrc}
+            allow="autoplay; fullscreen"
+            allowFullScreen
+            title={currentImage.alt}
+            className="w-full max-w-5xl aspect-video rounded-lg shadow-2xl border-0 bg-black"
+          />
+        ) : currentImage.kind === 'video' ? (
+          <video
+            key={currentImage.embedSrc}
+            src={currentImage.embedSrc}
+            controls
+            autoPlay
+            playsInline
+            className="max-w-full max-h-full rounded-lg shadow-2xl bg-black"
+          />
+        ) : (
+          <img
+            src={currentImage.src}
+            alt={currentImage.alt}
+            className="max-w-full max-h-full object-contain rounded-lg select-none shadow-2xl"
+            loading="eager"
+            draggable={false}
+          />
+        )}
       </div>
 
       {/* Swipe Instructions (Mobile Only) */}

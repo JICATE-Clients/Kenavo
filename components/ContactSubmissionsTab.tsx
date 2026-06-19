@@ -87,17 +87,17 @@ export default function ContactSubmissionsTab() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'unread': return 'bg-gradient-to-r from-red-100 to-red-50 text-red-700 border border-red-300 font-semibold';
-      case 'read': return 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-300 font-semibold';
-      case 'replied': return 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border border-green-300 font-semibold';
-      case 'archived': return 'bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-700 border border-neutral-300 font-semibold';
-      default: return 'bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-700 border border-neutral-300 font-semibold';
+      case 'unread': return 'bg-red-50 text-red-700 border border-red-300 font-semibold';
+      case 'read': return 'bg-blue-50 text-blue-700 border border-blue-300 font-semibold';
+      case 'replied': return 'bg-green-50 text-green-700 border border-green-300 font-semibold';
+      case 'archived': return 'bg-neutral-100 text-neutral-700 border border-neutral-300 font-semibold';
+      default: return 'bg-neutral-100 text-neutral-700 border border-neutral-300 font-semibold';
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="pb-6 border-b-2 border-[#4E2E8C]/20">
+      <div className="pb-6 border-b border-[#4E2E8C]/20">
         <h2 className="text-2xl font-bold text-[#4E2E8C]">
           Contact Form Submissions ({totalCount} Total)
         </h2>
@@ -114,7 +114,7 @@ export default function ContactSubmissionsTab() {
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white border-2 border-neutral-200 rounded-lg text-[#4E2E8C] placeholder-neutral-400 focus:outline-none focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 shadow-sm transition-all"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-lg text-[#4E2E8C] placeholder-neutral-400 focus:outline-none focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 transition-colors"
             />
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function ContactSubmissionsTab() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-3 bg-white border-2 border-neutral-200 rounded-lg text-[#4E2E8C] focus:outline-none focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 shadow-sm transition-all cursor-pointer hover:bg-neutral-50"
+          className="px-4 py-3 bg-white border border-neutral-200 rounded-lg text-[#4E2E8C] focus:outline-none focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 transition-colors cursor-pointer hover:bg-neutral-50"
         >
           <option value="all">All Status</option>
           <option value="unread">Unread</option>
@@ -134,26 +134,26 @@ export default function ContactSubmissionsTab() {
 
       {/* Submissions Table */}
       {loading ? (
-        <div className="text-center py-16 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-center py-16 bg-neutral-50 rounded-lg border border-neutral-200">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-neutral-200 border-t-[#4E2E8C] mb-4"></div>
           <p className="text-sm font-medium text-neutral-600">Loading...</p>
         </div>
       ) : submissions.length === 0 ? (
-        <div className="text-center py-16 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-center py-16 bg-neutral-50 rounded-lg border border-neutral-200">
           <p className="text-sm font-medium text-[#4E2E8C]">No submissions found</p>
           <p className="text-xs text-neutral-500 mt-1">Try adjusting your filters</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border-2 border-purple-200 shadow-md">
+        <div className="overflow-x-auto rounded-lg border border-neutral-200">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-purple-50 via-white to-purple-50">
+            <thead className="bg-neutral-50">
               <tr>
-                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b-2 border-purple-200">Name</th>
-                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b-2 border-purple-200">Email</th>
-                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b-2 border-purple-200">Date</th>
-                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b-2 border-purple-200">Status</th>
-                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b-2 border-purple-200">Files</th>
-                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b-2 border-purple-200">Actions</th>
+                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b border-purple-200">Name</th>
+                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b border-purple-200">Email</th>
+                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b border-purple-200">Date</th>
+                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b border-purple-200">Status</th>
+                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b border-purple-200">Files</th>
+                <th className="px-4 py-3 text-left text-[#4E2E8C] font-bold border-b border-purple-200">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -203,12 +203,11 @@ export default function ContactSubmissionsTab() {
           <button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="group relative px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] text-white text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <span className="relative z-10">Previous</span>
+            Previous
           </button>
-          <div className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-[#4E2E8C] shadow-md">
+          <div className="px-5 py-2.5 rounded-lg bg-[#4E2E8C]/5 border border-[#4E2E8C]">
             <span className="text-[#4E2E8C] font-bold text-sm">{page}</span>
             <span className="text-neutral-500 text-sm mx-1.5">/</span>
             <span className="text-[#4E2E8C] text-sm font-semibold">{totalPages}</span>
@@ -216,19 +215,18 @@ export default function ContactSubmissionsTab() {
           <button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
-            className="group relative px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] text-white text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <span className="relative z-10">Next</span>
+            Next
           </button>
         </div>
       )}
 
       {/* View Modal */}
       {selectedSubmission && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setSelectedSubmission(null)}>
-          <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-purple-200" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-start mb-6 pb-4 border-b-2 border-[#4E2E8C]/20">
+        <div className="fixed inset-0 bg-neutral-900/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedSubmission(null)}>
+          <div className="bg-gradient-to-br from-purple-50 to-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6 pb-4 border-b border-[#4E2E8C]/20">
               <h3 className="text-2xl font-bold text-[#4E2E8C]">Submission Details</h3>
               <button onClick={() => setSelectedSubmission(null)} className="text-neutral-400 hover:text-[#4E2E8C] transition-all p-2 hover:bg-[#4E2E8C]/10 rounded-lg">
                 <X size={24} />
@@ -253,7 +251,7 @@ export default function ContactSubmissionsTab() {
 
               <div>
                 <label className="text-[#4E2E8C] font-semibold text-sm mb-2 block">Message:</label>
-                <div className="bg-white p-6 rounded-xl border-2 border-[#4E2E8C] shadow-lg">
+                <div className="bg-white p-6 rounded-lg border border-[#4E2E8C]">
                   <p className="text-black font-bold whitespace-pre-wrap leading-relaxed text-lg">{selectedSubmission.message}</p>
                 </div>
               </div>
@@ -279,7 +277,7 @@ export default function ContactSubmissionsTab() {
                 <select
                   value={selectedSubmission.status}
                   onChange={(e) => updateStatus(selectedSubmission.id, e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border-2 border-[#4E2E8C]/20 rounded-lg text-[#4E2E8C] focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none cursor-pointer"
+                  className="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-lg text-[#4E2E8C] focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none cursor-pointer"
                 >
                   <option value="unread">Unread</option>
                   <option value="read">Read</option>
@@ -288,20 +286,18 @@ export default function ContactSubmissionsTab() {
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t-2 border-[#4E2E8C]/20">
+              <div className="flex gap-3 pt-4 border-t border-[#4E2E8C]/20">
                 <button
                   onClick={() => updateStatus(selectedSubmission.id, 'replied')}
-                  className="group relative flex-1 px-5 py-3 bg-gradient-to-r from-[#4E2E8C] to-[#6D28D9] text-white rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] transition-colors"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#7C3AED] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <span className="relative z-10">Mark as Replied</span>
+                  Mark as Replied
                 </button>
                 <button
                   onClick={() => deleteSubmission(selectedSubmission.id)}
-                  className="group relative px-5 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <span className="relative z-10">Delete</span>
+                  Delete
                 </button>
               </div>
             </div>

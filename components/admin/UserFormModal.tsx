@@ -120,14 +120,14 @@ export default function UserFormModal({ mode, user, onClose }: UserFormModalProp
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-2xl p-6 max-w-lg w-full border border-white/20 max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#3d2370] rounded-xl p-6 max-w-lg w-full border border-white/20 max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">
             {mode === 'create' ? 'Create New User' : `Edit User: ${user?.email}`}
           </h2>
           <button
             onClick={onClose}
-            className="text-white hover:text-red-400 transition-all"
+            className="text-white hover:text-red-400 transition-colors"
           >
             <X size={24} />
           </button>
@@ -180,7 +180,7 @@ export default function UserFormModal({ mode, user, onClose }: UserFormModalProp
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-all"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -249,7 +249,7 @@ export default function UserFormModal({ mode, user, onClose }: UserFormModalProp
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2"
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
                 'Saving...'
@@ -266,7 +266,7 @@ export default function UserFormModal({ mode, user, onClose }: UserFormModalProp
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white font-bold transition-all flex items-center gap-2"
+                className="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white font-bold transition-colors flex items-center gap-2"
               >
                 <Trash2 size={18} />
                 {deleting ? 'Deleting...' : 'Delete'}

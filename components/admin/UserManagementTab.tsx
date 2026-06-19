@@ -80,14 +80,14 @@ export default function UserManagementTab() {
   const getStatusBadge = (status: string) => {
     if (status === 'active') {
       return (
-        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-green-100 to-green-50 text-green-700 border border-green-300 shadow-sm">
+        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-300">
           <CheckCircle size={14} />
           Active
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-red-100 to-red-50 text-red-700 border border-red-300 shadow-sm">
+      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-300">
         <XCircle size={14} />
         Inactive
       </span>
@@ -97,14 +97,14 @@ export default function UserManagementTab() {
   const getRoleBadge = (role: string) => {
     if (role === 'admin') {
       return (
-        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border border-purple-300 shadow-sm">
+        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-300">
           <Shield size={14} />
           Admin
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-700 border border-neutral-300 shadow-sm">
+      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-700 border border-neutral-300">
         <User size={14} />
         User
       </span>
@@ -113,14 +113,14 @@ export default function UserManagementTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b-2 border-neutral-200">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-neutral-200">
         <h2 className="text-2xl font-bold text-[#4E2E8C] flex items-center gap-2 tracking-tight">
           <Users size={28} />
           User Management
         </h2>
         <button
           onClick={handleCreateUser}
-          className="bg-[#4E2E8C] hover:bg-[#5E3E9C] text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 justify-center shadow-sm hover:shadow-md"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] transition-colors justify-center"
         >
           <UserPlus size={20} />
           Add New User
@@ -140,7 +140,7 @@ export default function UserManagementTab() {
                 setSearchTerm(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-12 pr-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none shadow-sm transition-all"
+              className="w-full pl-12 pr-4 py-3 rounded-lg bg-white text-[#4E2E8C] placeholder-neutral-400 border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none transition-colors"
             />
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function UserManagementTab() {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none cursor-pointer shadow-sm transition-all"
+            className="w-full px-4 py-3 rounded-lg bg-white text-[#4E2E8C] border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none cursor-pointer transition-colors"
           >
             <option value="all">All Users</option>
             <option value="active">Active Only</option>
@@ -162,14 +162,14 @@ export default function UserManagementTab() {
       </div>
 
       {/* Stats */}
-      <div className="bg-gradient-to-r from-purple-50 via-white to-purple-50 rounded-lg p-4 border-2 border-purple-200 shadow-sm">
+      <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
         <div className="flex items-center justify-between">
           <p className="text-neutral-700 font-medium">
             Total Users: <span className="text-[#4E2E8C] font-bold text-lg">{totalCount}</span>
           </p>
           <button
             onClick={fetchUsers}
-            className="text-[#4E2E8C] hover:text-white hover:bg-[#4E2E8C] transition-all flex items-center gap-2 font-semibold px-3 py-1.5 rounded-lg"
+            className="text-[#4E2E8C] hover:text-white hover:bg-[#4E2E8C] transition-colors flex items-center gap-2 font-semibold px-3 py-1.5 rounded-lg"
             title="Refresh"
           >
             <RefreshCw size={18} />
@@ -180,12 +180,12 @@ export default function UserManagementTab() {
 
       {/* Users Table */}
       {loading ? (
-        <div className="text-center py-16 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-center py-16 bg-neutral-50 rounded-lg border border-neutral-200">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-neutral-200 border-t-[#4E2E8C] mb-4"></div>
           <p className="text-neutral-600 font-medium">Loading users...</p>
         </div>
       ) : users.length === 0 ? (
-        <div className="text-center py-16 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-center py-16 bg-neutral-50 rounded-lg border border-neutral-200">
           <Users size={48} className="mx-auto text-neutral-300 mb-4" />
           <p className="text-[#4E2E8C] text-lg font-semibold">No users found</p>
           <p className="text-neutral-500 text-sm mt-2">
@@ -195,26 +195,26 @@ export default function UserManagementTab() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border-2 border-purple-200 overflow-hidden shadow-md">
+        <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-purple-50 via-white to-purple-50">
+            <table className="w-full divide-y divide-neutral-200">
+              <thead className="bg-neutral-50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-[#4E2E8C] border-b-2 border-purple-200">Email</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-[#4E2E8C] border-b-2 border-purple-200">Username</th>
-                  <th className="px-6 py-4 text-center text-sm font-bold text-[#4E2E8C] border-b-2 border-purple-200">Role</th>
-                  <th className="px-6 py-4 text-center text-sm font-bold text-[#4E2E8C] border-b-2 border-purple-200">Directory Access</th>
-                  <th className="px-6 py-4 text-center text-sm font-bold text-[#4E2E8C] border-b-2 border-purple-200">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-[#4E2E8C] border-b-2 border-purple-200">Created</th>
-                  <th className="px-6 py-4 text-center text-sm font-bold text-[#4E2E8C] border-b-2 border-purple-200">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">Username</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-neutral-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-neutral-500 uppercase tracking-wider">Directory Access</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-neutral-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-neutral-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-[#4E2E8C]/5 transition-colors">
-                    <td className="px-6 py-4 text-neutral-700">
+                    <td className="px-6 py-4 text-neutral-900 font-medium">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#4E2E8C]/20 flex items-center justify-center text-[#4E2E8C] font-semibold border border-[#4E2E8C]/30">
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#4E2E8C]/10 flex items-center justify-center text-[#4E2E8C] font-semibold">
                           {user.email.charAt(0).toUpperCase()}
                         </div>
                         {user.email}
@@ -228,12 +228,12 @@ export default function UserManagementTab() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       {user.has_directory_access ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-300 shadow-sm">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-300">
                           <CheckCircle size={14} />
                           Granted
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-700 border border-neutral-300 shadow-sm">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-700 border border-neutral-300">
                           <XCircle size={14} />
                           Denied
                         </span>
@@ -249,7 +249,7 @@ export default function UserManagementTab() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEditUser(user)}
-                          className="text-[#4E2E8C] hover:text-white hover:bg-[#4E2E8C] transition-all p-2 rounded-lg"
+                          className="text-[#4E2E8C] hover:text-white hover:bg-[#4E2E8C] transition-colors p-2 rounded-lg"
                           title="Edit user"
                         >
                           <Edit size={18} />
@@ -266,15 +266,15 @@ export default function UserManagementTab() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 pt-6 mt-6 border-t-2 border-neutral-200">
+        <div className="flex items-center justify-center gap-3 pt-6 mt-6 border-t border-neutral-200">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-5 py-2.5 rounded-lg bg-white text-[#4E2E8C] text-sm font-semibold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#4E2E8C] hover:text-white transition-all shadow-sm hover:shadow-md border-2 border-neutral-200 hover:border-[#4E2E8C]"
+            className="px-5 py-2.5 rounded-lg bg-white text-[#4E2E8C] text-sm font-semibold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#4E2E8C] hover:text-white transition-colors border border-neutral-200 hover:border-[#4E2E8C]"
           >
             Previous
           </button>
-          <div className="px-5 py-2.5 rounded-lg bg-[#4E2E8C]/5 border-2 border-[#4E2E8C]">
+          <div className="px-5 py-2.5 rounded-lg bg-[#4E2E8C]/5 border border-[#4E2E8C]">
             <span className="text-[#4E2E8C] font-bold text-sm">{page}</span>
             <span className="text-neutral-500 text-sm mx-1.5">/</span>
             <span className="text-[#4E2E8C] text-sm">{totalPages}</span>
@@ -282,7 +282,7 @@ export default function UserManagementTab() {
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-5 py-2.5 rounded-lg bg-white text-[#4E2E8C] text-sm font-semibold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#4E2E8C] hover:text-white transition-all shadow-sm hover:shadow-md border-2 border-neutral-200 hover:border-[#4E2E8C]"
+            className="px-5 py-2.5 rounded-lg bg-white text-[#4E2E8C] text-sm font-semibold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#4E2E8C] hover:text-white transition-colors border border-neutral-200 hover:border-[#4E2E8C]"
           >
             Next
           </button>

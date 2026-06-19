@@ -5,6 +5,7 @@
  */
 
 import { supabaseAdmin } from './supabase-admin';
+import { galleryPosterUrl } from './gallery-media';
 
 const GALLERY_BUCKET = 'gallery-images';
 const THUMBNAILS_FOLDER = 'thumbnails';
@@ -197,26 +198,32 @@ export async function listAlbumImages(albumSlug: string): Promise<string[]> {
   }
 }
 
+// Allowed gallery media types (shared by the uploader, the upload API and the bucket).
+export const GALLERY_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+export const GALLERY_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo'];
+
+// Per-kind size limits (MB). Videos are larger but note that very large manual
+// uploads can still hit the hosting request-body limit — use Drive sync for those.
+export const GALLERY_IMAGE_MAX_MB = 5;
+export const GALLERY_VIDEO_MAX_MB = 50;
+
 /**
- * Validate image file type and size
+ * Validate a gallery media file (image or video) by type and size.
  * @param file - The file to validate
- * @param maxSizeMB - Maximum file size in MB (default 5MB)
  * @returns Validation result with error message if invalid
  */
-export function validateGalleryImage(
-  file: File,
-  maxSizeMB: number = 5
-): { valid: boolean; error?: string } {
-  // Check file type
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  if (!allowedTypes.includes(file.type)) {
+export function validateGalleryMedia(file: File): { valid: boolean; error?: string } {
+  const isImage = GALLERY_IMAGE_TYPES.includes(file.type);
+  const isVideo = GALLERY_VIDEO_TYPES.includes(file.type);
+
+  if (!isImage && !isVideo) {
     return {
       valid: false,
-      error: `Invalid file type: ${file.type}. Allowed types: JPEG, PNG, WebP, GIF`,
+      error: `Invalid file type: ${file.type || 'unknown'}. Allowed: JPEG, PNG, WebP, GIF, MP4, MOV, WebM, AVI`,
     };
   }
 
-  // Check file size
+  const maxSizeMB = isVideo ? GALLERY_VIDEO_MAX_MB : GALLERY_IMAGE_MAX_MB;
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   if (file.size > maxSizeBytes) {
     return {
@@ -226,6 +233,35 @@ export function validateGalleryImage(
   }
 
   return { valid: true };
+}
+
+/**
+ * Fill in a thumbnail for any album missing one, using its first active image
+ * (videos resolve to their Drive poster JPEG via galleryPosterUrl). Drive-synced
+ * and newly created albums often have no thumbnail_url yet — this keeps cards from
+ * falling back to a missing placeholder. Mutates and returns the same array.
+ */
+export async function fillAlbumThumbnails<
+  T extends { id: number; thumbnail_url: string | null }
+>(albums: T[]): Promise<T[]> {
+  await Promise.all(
+    albums
+      .filter((album) => !album.thumbnail_url)
+      .map(async (album) => {
+        const { data: firstImage } = await supabaseAdmin
+          .from('gallery_images')
+          .select('image_url')
+          .eq('album_id', album.id)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (firstImage?.image_url) {
+          album.thumbnail_url = galleryPosterUrl(firstImage.image_url);
+        }
+      })
+  );
+  return albums;
 }
 
 /**

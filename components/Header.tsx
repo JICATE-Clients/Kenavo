@@ -1,7 +1,98 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { ChevronDown } from 'lucide-react';
+
+/**
+ * Sub-pages that live under the "Echoes & Memories" section. This is the one
+ * place to add more memory pages later — append an item and it appears in the
+ * dropdown on every breakpoint automatically.
+ */
+const MEMORIES_ITEMS: { label: string; href: string }[] = [
+  { label: 'Rewind: The Songs We Grew Up On', href: '/echoes-and-memories/rewind' },
+];
+
+/**
+ * Accessible nav dropdown. Opens on hover (pointer) and on click/Enter
+ * (keyboard), closes on Escape, outside-click, or selecting an item.
+ */
+function MemoriesDropdown({ label, linkClassName }: { label: string; linkClassName: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={`inline-flex items-center gap-1 ${linkClassName}`}
+      >
+        {label}
+        <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-xl border border-black/5 bg-white p-1.5 shadow-xl"
+        >
+          {MEMORIES_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block rounded-lg px-3 py-2 text-[13px] font-medium normal-case tracking-normal text-neutral-700 transition-colors hover:bg-[#4E2E8C]/8 hover:text-[#4E2E8C]"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Picks the right nav affordance for the memories section: a single destination
+ * renders as a plain link (a one-item dropdown is needless friction), while two
+ * or more keep the dropdown. Add a second entry to MEMORIES_ITEMS and the menu
+ * comes back on its own.
+ */
+function MemoriesNav({ label, linkClassName }: { label: string; linkClassName: string }) {
+  if (MEMORIES_ITEMS.length <= 1) {
+    return (
+      <Link href={MEMORIES_ITEMS[0]?.href ?? '/echoes-and-memories'} className={linkClassName}>
+        {label}
+      </Link>
+    );
+  }
+  return <MemoriesDropdown label={label} linkClassName={linkClassName} />;
+}
 
 const Header = () => {
   return (
@@ -29,6 +120,10 @@ const Header = () => {
           <Link href="/reunion-2025" className="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
             REUNION &apos;25
           </Link>
+          <MemoriesNav
+            label={'ECHOES & MEMORIES'}
+            linkClassName="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide font-semibold"
+          />
           <Link href="/contact" className="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
             CONTACT
           </Link>
@@ -48,6 +143,10 @@ const Header = () => {
           <Link href="/reunion-2025" className="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
             REUNION
           </Link>
+          <MemoriesNav
+            label="MEMORIES"
+            linkClassName="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide font-semibold"
+          />
           <Link href="/contact" className="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
             CONTACT
           </Link>

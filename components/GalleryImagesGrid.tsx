@@ -5,6 +5,14 @@ import ImageLightbox from './ImageLightbox';
 import { useAlbumImages } from '@/lib/hooks/use-album-images';
 import { useInfiniteScroll } from '@/lib/hooks/use-infinite-scroll';
 import { GALLERY_CONFIG } from '@/lib/config/gallery-config';
+import { Play } from 'lucide-react';
+import {
+  isDriveVideoEmbed,
+  isDirectVideo,
+  driveFileIdFromUrl,
+  buildDriveThumbnailUrl,
+  buildDriveStreamUrl,
+} from '@/lib/gallery-media';
 
 interface GalleryImagesGridProps {
   albumSlug: string;
@@ -44,11 +52,27 @@ const GalleryImagesGrid: React.FC<GalleryImagesGridProps> = ({
     autoLoadCount,
   });
 
-  // Transform images for lightbox
-  const galleryImages = images.map(img => ({
-    src: img.image_url,
-    alt: img.caption || `Gallery image ${img.id}`,
-  }));
+  // Transform images for the grid + lightbox. Videos use a lightweight poster
+  // (kind/embedSrc) so the grid never mounts heavy player iframes — the player
+  // is only loaded on click, inside the lightbox.
+  const galleryImages = images.map(img => {
+    const url = img.image_url;
+    const alt = img.caption || `Gallery image ${img.id}`;
+    if (isDriveVideoEmbed(url)) {
+      const fileId = driveFileIdFromUrl(url);
+      return {
+        // Lightweight poster in the grid; play via our streaming proxy on click.
+        src: fileId ? buildDriveThumbnailUrl(fileId) : '',
+        alt,
+        kind: 'video' as const,
+        embedSrc: fileId ? buildDriveStreamUrl(fileId) : url,
+      };
+    }
+    if (isDirectVideo(url)) {
+      return { src: url, alt, kind: 'video' as const, embedSrc: url };
+    }
+    return { src: url, alt, kind: 'image' as const };
+  });
 
   const handleImageClick = (index: number) => {
     setCurrentImageIndex(index);
@@ -106,23 +130,13 @@ const GalleryImagesGrid: React.FC<GalleryImagesGridProps> = ({
     );
   }
 
-  const isVideo = (src: string) => /\.(mp4|mov|webm|avi)$/i.test(src);
-
   // Responsive grid - 2 columns mobile, 3 tablet, 4 desktop
   const renderGrid = () => {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 w-full mt-8 sm:mt-12 md:mt-16 lg:mt-20">
         {galleryImages.map((image, index) => (
           <div key={index} className="w-full aspect-square">
-            {isVideo(image.src) ? (
-              <video
-                src={image.src}
-                controls
-                muted
-                playsInline
-                className="w-full h-full object-cover rounded-lg shadow-md"
-              />
-            ) : (
+            {image.kind === 'image' ? (
               <img
                 src={image.src}
                 alt={image.alt}
@@ -130,6 +144,30 @@ const GalleryImagesGrid: React.FC<GalleryImagesGridProps> = ({
                 className="w-full h-full object-cover rounded-lg hover:opacity-80 hover:scale-105 transition-all duration-300 cursor-pointer shadow-md"
                 loading="lazy"
               />
+            ) : (
+              // Video facade: a static poster + play badge. Clicking opens the
+              // actual player in the lightbox so we never mount many iframes.
+              <button
+                type="button"
+                onClick={() => handleImageClick(index)}
+                aria-label={`Play video: ${image.alt}`}
+                className="group relative w-full h-full rounded-lg overflow-hidden shadow-md bg-neutral-900"
+              >
+                {image.src && (
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    loading="lazy"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden'; }}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                )}
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 group-hover:bg-purple-600 transition-colors">
+                    <Play className="w-6 h-6 sm:w-7 sm:h-7 text-white fill-white ml-0.5" />
+                  </span>
+                </span>
+              </button>
             )}
           </div>
         ))}

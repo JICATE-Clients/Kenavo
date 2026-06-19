@@ -3,6 +3,7 @@ import Footer from '@/components/Footer';
 import GalleryClient from '@/components/GalleryClient';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { GALLERY_CONFIG } from '@/lib/config/gallery-config';
+import { fillAlbumThumbnails } from '@/lib/gallery-storage-utils';
 
 export default async function GalleryPage() {
   const limit = GALLERY_CONFIG.ITEMS_PER_PAGE;
@@ -18,6 +19,11 @@ export default async function GalleryPage() {
   const albums  = data ?? [];
   const total   = count ?? 0;
   const hasMore = total > albums.length;
+
+  // Drive-synced (or newly created) albums often have no thumbnail_url yet, which
+  // would fall back to a missing placeholder. Derive a poster from each such
+  // album's first image so every card shows a real thumbnail.
+  await fillAlbumThumbnails(albums);
 
   return (
     <div className="bg-[rgba(78,46,140,1)] flex flex-col overflow-hidden items-center min-h-screen">

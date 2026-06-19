@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, Save, CheckCircle, AlertCircle } from 'lucide-react';
 import { GalleryImage } from '@/lib/types/gallery';
+import { galleryPosterUrl } from '@/lib/gallery-media';
 
 interface ImageDetailModalProps {
   image: GalleryImage;
@@ -60,12 +61,12 @@ export default function ImageDetailModal({ image, onClose }: ImageDetailModalPro
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-2xl p-6 max-w-2xl w-full border border-white/20">
+      <div className="bg-[#3d2370] rounded-xl p-6 max-w-2xl w-full border border-white/20">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">Edit Image</h2>
           <button
             onClick={onClose}
-            className="text-white hover:text-red-400 transition-all"
+            className="text-white hover:text-red-400 transition-colors"
           >
             <X size={24} />
           </button>
@@ -74,9 +75,9 @@ export default function ImageDetailModal({ image, onClose }: ImageDetailModalPro
         {/* Image Preview */}
         <div className="mb-6">
           <img
-            src={image.image_url}
+            src={galleryPosterUrl(image.image_url)}
             alt={image.caption || 'Image'}
-            className="w-full h-64 object-cover rounded-lg border-2 border-white/20"
+            className="w-full h-64 object-cover rounded-lg border border-white/20"
           />
         </div>
 
@@ -141,7 +142,7 @@ export default function ImageDetailModal({ image, onClose }: ImageDetailModalPro
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2"
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
                 'Saving...'
@@ -155,7 +156,7 @@ export default function ImageDetailModal({ image, onClose }: ImageDetailModalPro
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold transition-all"
+              className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold transition-colors"
             >
               Cancel
             </button>

@@ -566,3 +566,27 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%);
 }
+
+/* Shrink the third-party bug-reporter floating button to match the AI chat
+   launcher. The SDK sizes the button with inline styles (3.5rem / 3rem), so we
+   need higher specificity + !important to win. */
+button.bug-reporter-floating-btn {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+}
+button.bug-reporter-floating-btn svg {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+}
+
+/* Soft pulsing glow that makes the AI chat launcher look "shiny". */
+@keyframes kenavoShine {
+  0%, 100% { filter: drop-shadow(0 2px 4px rgba(42, 26, 82, 0.45)) drop-shadow(0 0 3px rgba(217, 81, 100, 0.35)); }
+  50%      { filter: drop-shadow(0 2px 6px rgba(42, 26, 82, 0.5))  drop-shadow(0 0 9px rgba(217, 81, 100, 0.75)); }
+}
+.kenavo-shine {
+  animation: kenavoShine 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kenavo-shine { animation: none; }
+}

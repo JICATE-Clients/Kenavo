@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Image as ImageIcon, FolderOpen, RefreshCw } from 'lucide-react';
+import { Image as ImageIcon, FolderOpen, RefreshCw, Edit2 } from 'lucide-react';
 import { GalleryAlbum } from '@/lib/types/gallery';
 import AlbumList from './gallery/AlbumList';
+import AlbumFormModal from './gallery/AlbumFormModal';
 import ImageUploader from './gallery/ImageUploader';
 import ImageGalleryView from './gallery/ImageGalleryView';
 
@@ -12,6 +13,7 @@ export default function GalleryManagementTab() {
   const [selectedAlbum, setSelectedAlbum] = useState<GalleryAlbum | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [editingAlbum, setEditingAlbum] = useState<GalleryAlbum | null>(null);
 
   useEffect(() => {
     fetchAlbums();
@@ -66,23 +68,22 @@ export default function GalleryManagementTab() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between pb-6 border-b-2 border-neutral-200">
+      <div className="flex items-center justify-between pb-6 border-b border-neutral-200">
         <div>
           <h2 className="text-2xl font-bold text-[#4E2E8C] mb-2">Gallery Management</h2>
           <p className="text-neutral-600">Manage gallery albums and images</p>
         </div>
         <button
           onClick={handleRefresh}
-          className="group relative flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-yellow to-accent-400 text-[#4E2E8C] font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 overflow-hidden"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] transition-colors"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-accent-400 to-accent-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <RefreshCw size={18} className="relative z-10 group-hover:rotate-180 transition-transform duration-500" />
-          <span className="relative z-10">Refresh</span>
+          <RefreshCw size={18} />
+          <span>Refresh</span>
         </button>
       </div>
 
       {loading ? (
-        <div className="text-neutral-600 text-center py-16 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-neutral-600 text-center py-16 bg-neutral-50 rounded-lg border border-neutral-200">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-neutral-200 border-t-[#4E2E8C] mb-4"></div>
           <p className="text-sm font-medium">Loading albums...</p>
         </div>
@@ -103,17 +104,17 @@ export default function GalleryManagementTab() {
             {selectedAlbum ? (
               <div className="space-y-6">
                 {/* Album Header */}
-                <div className="bg-gradient-to-r from-purple-50 via-white to-purple-50 rounded-lg p-4 border-2 border-purple-200 shadow-sm">
+                <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
                       {selectedAlbum.thumbnail_url ? (
                         <img
                           src={selectedAlbum.thumbnail_url}
                           alt={selectedAlbum.name}
-                          className="w-20 h-20 rounded-lg object-cover border-2 border-[#4E2E8C] shadow-md"
+                          className="w-20 h-20 rounded-lg object-cover border border-[#4E2E8C]"
                         />
                       ) : (
-                        <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-50 flex items-center justify-center border-2 border-neutral-300">
+                        <div className="w-20 h-20 rounded-lg bg-neutral-100 flex items-center justify-center border border-neutral-300">
                           <FolderOpen size={32} className="text-neutral-400" />
                         </div>
                       )}
@@ -123,6 +124,13 @@ export default function GalleryManagementTab() {
                         <p className="text-neutral-600 text-xs mt-2">Slug: <span className="font-medium text-[#4E2E8C]">{selectedAlbum.slug}</span></p>
                       </div>
                     </div>
+                    <button
+                      onClick={() => setEditingAlbum(selectedAlbum)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-neutral-200 text-[#4E2E8C] text-sm font-semibold hover:bg-neutral-50 hover:border-[#4E2E8C] transition-colors shrink-0"
+                    >
+                      <Edit2 size={16} />
+                      Edit album
+                    </button>
                   </div>
                 </div>
 
@@ -135,11 +143,12 @@ export default function GalleryManagementTab() {
                 {/* Image Gallery */}
                 <ImageGalleryView
                   album={selectedAlbum}
+                  refreshKey={refreshTrigger}
                   onUpdate={handleRefresh}
                 />
               </div>
             ) : (
-              <div className="bg-neutral-50 rounded-lg p-12 border-2 border-neutral-200 text-center">
+              <div className="bg-neutral-50 rounded-lg p-12 border border-neutral-200 text-center">
                 <ImageIcon size={64} className="text-neutral-300 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-[#4E2E8C] mb-2">Select an Album</h3>
                 <p className="text-neutral-600">
@@ -149,6 +158,18 @@ export default function GalleryManagementTab() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Edit album modal — opened from the selected album header */}
+      {editingAlbum && (
+        <AlbumFormModal
+          mode="edit"
+          album={editingAlbum}
+          onClose={() => {
+            setEditingAlbum(null);
+            handleRefresh();
+          }}
+        />
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { NextResponse } from 'next/server';
+import { fillAlbumThumbnails } from '@/lib/gallery-storage-utils';
 
 // Route reads request.url for search params — must stay dynamic
 export const dynamic = 'force-dynamic';
@@ -27,14 +28,16 @@ export async function GET(request: Request) {
       throw error;
     }
 
-    const transformedAlbums = (albums ?? []).map(album => ({
-      id:            album.id,
-      name:          album.name,
-      slug:          album.slug,
-      description:   album.description,
-      thumbnail_url: album.thumbnail_url,
-      display_order: album.display_order,
-    }));
+    const transformedAlbums = await fillAlbumThumbnails(
+      (albums ?? []).map(album => ({
+        id:            album.id,
+        name:          album.name,
+        slug:          album.slug,
+        description:   album.description,
+        thumbnail_url: album.thumbnail_url,
+        display_order: album.display_order,
+      }))
+    );
 
     const total      = totalCount ?? 0;
     const totalPages = Math.ceil(total / limit);

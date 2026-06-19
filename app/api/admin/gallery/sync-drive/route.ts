@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { protectAdminRoute } from '@/lib/auth/api-protection';
 import { listDriveImages, downloadDriveFile } from '@/lib/google-drive';
+import { buildDriveVideoEmbedUrl } from '@/lib/gallery-media';
 
 const GALLERY_BUCKET = 'gallery-images';
 
@@ -44,8 +45,12 @@ export async function POST(request: NextRequest) {
 
     const syncedDriveIds = new Set<string>();
     for (const img of existingImages || []) {
-      const match = img.image_url.match(/drive_([^.]+)\./);
-      if (match) syncedDriveIds.add(match[1]);
+      // Images live at .../drive_<id>.<ext>; videos are stored as a Drive
+      // preview link .../file/d/<id>/preview. Recognise both so re-syncs skip them.
+      const storageMatch = img.image_url.match(/drive_([^.]+)\./);
+      const embedMatch = img.image_url.match(/\/file\/d\/([^/]+)\//);
+      const driveId = storageMatch?.[1] || embedMatch?.[1];
+      if (driveId) syncedDriveIds.add(driveId);
     }
 
     // Fetch image list from Google Drive folder
@@ -75,28 +80,38 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-        const storagePath = `albums/${album.slug}/drive_${file.id}.${ext}`;
+        let imageUrl: string;
 
-        const buffer = await downloadDriveFile(file.id);
+        if (file.mimeType.startsWith('video/')) {
+          // Videos are NOT copied into Storage — they are large and downloading
+          // dozens sequentially caused MIME rejections, ECONNRESET and timeouts.
+          // Store an embeddable Drive preview link that streams from Drive instead.
+          // (The Drive file must be shared "Anyone with the link" to play publicly.)
+          imageUrl = buildDriveVideoEmbedUrl(file.id);
+        } else {
+          const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+          const storagePath = `albums/${album.slug}/drive_${file.id}.${ext}`;
 
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from(GALLERY_BUCKET)
-          .upload(storagePath, buffer, {
-            contentType: file.mimeType,
-            cacheControl: '3600',
-            upsert: false,
-          });
+          const buffer = await downloadDriveFile(file.id);
 
-        if (uploadError) throw uploadError;
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from(GALLERY_BUCKET)
+            .upload(storagePath, buffer, {
+              contentType: file.mimeType,
+              cacheControl: '3600',
+              upsert: false,
+            });
 
-        const { data: { publicUrl } } = supabaseAdmin.storage
-          .from(GALLERY_BUCKET)
-          .getPublicUrl(storagePath);
+          if (uploadError) throw uploadError;
+
+          imageUrl = supabaseAdmin.storage
+            .from(GALLERY_BUCKET)
+            .getPublicUrl(storagePath).data.publicUrl;
+        }
 
         await supabaseAdmin.from('gallery_images').insert({
           album_id: album.id,
-          image_url: publicUrl,
+          image_url: imageUrl,
           caption: file.name.replace(/\.[^.]+$/, ''),
           display_order: nextOrder,
           is_active: true,

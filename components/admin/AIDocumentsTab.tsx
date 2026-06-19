@@ -168,28 +168,28 @@ export default function AIDocumentsTab() {
     switch (status) {
       case 'completed':
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-green-100 to-green-50 text-green-700 border border-green-300 shadow-sm">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-300">
             <CheckCircle size={14} />
             Completed
           </span>
         );
       case 'uploading':
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-300 shadow-sm">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-300">
             <Loader2 size={14} className="animate-spin" />
             Uploading
           </span>
         );
       case 'failed':
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-red-100 to-red-50 text-red-700 border border-red-300 shadow-sm">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-300">
             <XCircle size={14} />
             Failed
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-700 border border-yellow-300 shadow-sm">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-700 border border-yellow-300">
             <Clock size={14} />
             Pending
           </span>
@@ -199,15 +199,15 @@ export default function AIDocumentsTab() {
 
   const getCategoryBadge = (cat: string) => {
     const colors: Record<string, string> = {
-      alumni_profiles: 'bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border border-purple-300 shadow-sm',
-      knowledge_base: 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-300 shadow-sm',
-      events: 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border border-green-300 shadow-sm',
-      newsletters: 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-700 border border-yellow-300 shadow-sm',
-      resources: 'bg-gradient-to-r from-pink-100 to-pink-50 text-pink-700 border border-pink-300 shadow-sm',
+      alumni_profiles: 'bg-purple-50 text-purple-700 border border-purple-300',
+      knowledge_base: 'bg-blue-50 text-blue-700 border border-blue-300',
+      events: 'bg-green-50 text-green-700 border border-green-300',
+      newsletters: 'bg-yellow-50 text-yellow-700 border border-yellow-300',
+      resources: 'bg-pink-50 text-pink-700 border border-pink-300',
     };
 
     return (
-      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${colors[cat] || 'bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-700 border border-neutral-300 shadow-sm'}`}>
+      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${colors[cat] || 'bg-neutral-100 text-neutral-700 border border-neutral-300'}`}>
         <FolderOpen size={14} />
         {cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
       </span>
@@ -226,7 +226,7 @@ export default function AIDocumentsTab() {
           <button
             onClick={handleSyncAlumni}
             disabled={syncing}
-            className="bg-[#4E2E8C] hover:bg-[#5E3E9C] disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 shadow-sm"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] disabled:opacity-50 transition-colors"
           >
             {syncing ? (
               <>
@@ -242,7 +242,7 @@ export default function AIDocumentsTab() {
           </button>
           <button
             onClick={() => setUploadModalOpen(true)}
-            className="bg-[#D95164] hover:bg-[#C94154] text-white px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 shadow-sm"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#D95164] hover:bg-[#C94154] text-white px-4 py-2 text-sm font-medium transition-colors"
           >
             <Upload size={16} />
             Upload Document
@@ -269,7 +269,7 @@ export default function AIDocumentsTab() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm cursor-pointer shadow-sm transition-all"
+            className="w-full px-3 py-2.5 rounded-lg bg-white text-[#4E2E8C] border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm cursor-pointer transition-colors"
           >
             <option value="all">All Categories</option>
             <option value="alumni_profiles">Alumni Profiles</option>
@@ -285,7 +285,7 @@ export default function AIDocumentsTab() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-white text-[#4E2E8C] border-2 border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm cursor-pointer shadow-sm transition-all"
+            className="w-full px-3 py-2.5 rounded-lg bg-white text-[#4E2E8C] border border-neutral-200 focus:border-[#4E2E8C] focus:ring-2 focus:ring-[#4E2E8C]/20 focus:outline-none text-sm cursor-pointer transition-colors"
           >
             <option value="all">All Status</option>
             <option value="completed">Completed</option>
@@ -298,7 +298,7 @@ export default function AIDocumentsTab() {
         <div className="flex items-end">
           <button
             onClick={() => fetchDocuments()}
-            className="w-full bg-[#4E2E8C] hover:bg-[#5E3E9C] text-white px-3 py-2.5 rounded-lg border-2 border-[#4E2E8C] transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-sm hover:shadow-md"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#4E2E8C] px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#3d2370] transition-colors"
           >
             <RefreshCw size={14} />
             Refresh
@@ -308,27 +308,27 @@ export default function AIDocumentsTab() {
 
       {/* Documents List */}
       {loading ? (
-        <div className="text-center py-12 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-center py-12 bg-neutral-50 rounded-lg border border-neutral-200">
           <Loader2 size={32} className="mx-auto animate-spin text-[#4E2E8C]" />
           <p className="text-neutral-600 mt-4 text-sm font-medium">Loading documents...</p>
         </div>
       ) : documents.length === 0 ? (
-        <div className="text-center py-12 bg-neutral-50 rounded-xl border-2 border-neutral-200">
+        <div className="text-center py-12 bg-neutral-50 rounded-lg border border-neutral-200">
           <FileText size={40} className="mx-auto text-neutral-300 mb-4" />
           <p className="text-[#4E2E8C] font-semibold text-lg">No documents found</p>
           <p className="text-neutral-600 text-sm mt-2">Upload your first document to get started</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border-2 border-purple-200 overflow-hidden shadow-md">
+        <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-purple-50 via-white to-purple-50">
+            <table className="w-full divide-y divide-neutral-200">
+              <thead className="bg-neutral-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-[#4E2E8C] uppercase tracking-wider border-b-2 border-purple-200">Document</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-[#4E2E8C] uppercase tracking-wider border-b-2 border-purple-200">Category</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-[#4E2E8C] uppercase tracking-wider border-b-2 border-purple-200">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-[#4E2E8C] uppercase tracking-wider border-b-2 border-purple-200">Uploaded</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-[#4E2E8C] uppercase tracking-wider border-b-2 border-purple-200">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">Document</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-neutral-500 uppercase tracking-wider">Category</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-neutral-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">Uploaded</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-neutral-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
@@ -336,14 +336,14 @@ export default function AIDocumentsTab() {
                   <tr key={doc.id} className="hover:bg-[#4E2E8C]/5 transition-colors">
                     <td className="px-4 py-3 text-neutral-700">
                       <div>
-                        <div className="font-semibold text-sm text-[#4E2E8C]">{doc.display_name}</div>
-                        <div className="text-xs text-neutral-600 mt-0.5">{doc.file_name}</div>
+                        <div className="font-medium text-sm text-neutral-900">{doc.display_name}</div>
+                        <div className="text-xs text-neutral-500 mt-0.5">{doc.file_name}</div>
                         {doc.tags && doc.tags.length > 0 && (
                           <div className="flex gap-1 mt-1.5">
                             {doc.tags.map((tag, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-700 border border-neutral-300"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-neutral-100 text-neutral-700 border border-neutral-300"
                               >
                                 <Tag size={10} />
                                 {tag}
@@ -361,7 +361,7 @@ export default function AIDocumentsTab() {
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => handleDelete(doc.id)}
-                        className="text-red-600 hover:text-white hover:bg-red-600 transition-all p-1.5 rounded-lg"
+                        className="text-red-600 hover:text-white hover:bg-red-600 transition-colors p-1.5 rounded-lg"
                         title="Delete document"
                       >
                         <Trash2 size={14} />
@@ -377,7 +377,7 @@ export default function AIDocumentsTab() {
 
       {/* Upload Modal */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-neutral-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-xl p-6 max-w-lg w-full border border-slate-800 max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-5 pb-4 border-b border-slate-800">
               <h3 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -389,7 +389,7 @@ export default function AIDocumentsTab() {
                   setUploadModalOpen(false);
                   resetForm();
                 }}
-                className="text-slate-400 hover:text-white transition-all p-1 hover:bg-slate-800 rounded-lg"
+                className="text-slate-400 hover:text-white transition-colors p-1 hover:bg-slate-800 rounded-lg"
               >
                 <XCircle size={20} />
               </button>
@@ -460,7 +460,7 @@ export default function AIDocumentsTab() {
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="flex-1 bg-brand-yellow hover:bg-accent-400 disabled:opacity-50 text-[#4E2E8C] px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2"
+                  className="flex-1 bg-brand-yellow hover:bg-accent-400 disabled:opacity-50 text-[#4E2E8C] px-4 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   {uploading ? (
                     <>
@@ -480,7 +480,7 @@ export default function AIDocumentsTab() {
                     setUploadModalOpen(false);
                     resetForm();
                   }}
-                  className="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-sm transition-all border border-slate-700"
+                  className="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-sm transition-colors border border-slate-700"
                 >
                   Cancel
                 </button>
