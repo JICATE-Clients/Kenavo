@@ -13,7 +13,7 @@ import {
   FileText,
   Music,
   LogOut,
-  Menu,
+  MoreHorizontal,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -73,6 +73,19 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+const ALL_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+
+/**
+ * Quick-access tabs surfaced directly in the mobile bottom bar. There are 10
+ * sections in total — too many for a bar — so only the most-used ones get a
+ * slot here; everything stays one tap away via the "More" sheet, which mirrors
+ * the full sidebar. Reorder or swap these ids to change the prime real estate.
+ */
+const PRIMARY_IDS: string[] = ['manage', 'single', 'gallery', 'contact'];
+const PRIMARY_ITEMS: NavItem[] = PRIMARY_IDS
+  .map((id) => ALL_ITEMS.find((i) => i.id === id))
+  .filter((i): i is NavItem => Boolean(i));
+
 function currentLabel(activeTab: string): string {
   for (const group of NAV_GROUPS) {
     const found = group.items.find((i) => i.id === activeTab);
@@ -96,31 +109,24 @@ export default function AdminShell({
   loggingOut,
   children,
 }: AdminShellProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // Mobile "More" sheet — the overflow for sections that don't fit the bar.
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const handleNav = (id: string) => {
     onTabChange(id);
-    setMobileOpen(false);
+    setMoreOpen(false);
   };
+
+  // Highlight "More" whenever the current section lives in the sheet rather
+  // than the bar, so the active state is never lost off-screen.
+  const moreActive = !PRIMARY_IDS.includes(activeTab);
 
   return (
     <div className="min-h-screen bg-[#f6f5fb] text-neutral-800">
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <button
-          aria-label="Close navigation"
-          onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-neutral-900/40 lg:hidden"
-        />
-      )}
-
       <div className="flex min-h-screen">
-        {/* Sidebar */}
-        <aside
-          className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-neutral-200 bg-white transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 motion-reduce:transition-none ${
-            mobileOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
+        {/* Sidebar — desktop only. On mobile, navigation moves to the bottom
+            bar below, so there is no slide-out drawer or hamburger. */}
+        <aside className="hidden w-60 flex-col border-r border-neutral-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen">
           {/* Brand */}
           <div className="flex h-16 items-center gap-3 border-b border-neutral-200 px-5">
             <div
@@ -133,13 +139,6 @@ export default function AdminShell({
               <div className="text-sm font-semibold text-neutral-900">Kenavo</div>
               <div className="text-xs text-neutral-500">Admin</div>
             </div>
-            <button
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close navigation"
-              className="ml-auto rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 lg:hidden"
-            >
-              <X size={18} />
-            </button>
           </div>
 
           {/* Nav */}
@@ -188,14 +187,6 @@ export default function AdminShell({
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Topbar */}
           <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-neutral-200 bg-white px-4 sm:px-6">
-            <button
-              onClick={() => setMobileOpen(true)}
-              aria-label="Open navigation"
-              className="rounded-md p-2 text-neutral-600 hover:bg-neutral-100 lg:hidden"
-            >
-              <Menu size={20} />
-            </button>
-
             <h1 className="text-base font-semibold text-neutral-900">
               {currentLabel(activeTab)}
             </h1>
@@ -210,12 +201,103 @@ export default function AdminShell({
             </button>
           </header>
 
-          {/* Content */}
-          <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8">
+          {/* Content — extra bottom padding on mobile so the fixed bottom bar
+              never covers the last rows of content. */}
+          <main className="flex-1 px-4 pt-5 pb-24 sm:px-6 lg:px-8 lg:pb-5">
             <div className="mx-auto w-full max-w-screen-2xl">{children}</div>
           </main>
         </div>
       </div>
+
+      {/* Mobile bottom navigation — replaces the slide-out sidebar on phones.
+          Primary tabs sit in the bar; the long tail lives behind "More". */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden"
+        role="navigation"
+        aria-label="Admin navigation"
+      >
+        {PRIMARY_ITEMS.map((item) => {
+          const active = activeTab === item.id;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleNav(item.id)}
+              aria-current={active ? 'page' : undefined}
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition-colors motion-reduce:transition-none"
+              style={{ color: active ? PURPLE : '#525252' }}
+            >
+              <Icon size={20} className="shrink-0" />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+        <button
+          onClick={() => setMoreOpen(true)}
+          aria-expanded={moreOpen}
+          aria-label="More sections"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition-colors motion-reduce:transition-none"
+          style={{ color: moreActive ? PURPLE : '#525252' }}
+        >
+          <MoreHorizontal size={20} className="shrink-0" />
+          <span>More</span>
+        </button>
+      </nav>
+
+      {/* "More" bottom sheet — the full grouped menu, mirroring the sidebar. */}
+      {moreOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+          <button
+            aria-label="Close menu"
+            onClick={() => setMoreOpen(false)}
+            className="absolute inset-0 bg-neutral-900/40"
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[75vh] overflow-y-auto rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]">
+            <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
+              <span className="text-sm font-semibold text-neutral-900">All sections</span>
+              <button
+                onClick={() => setMoreOpen(false)}
+                aria-label="Close menu"
+                className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-3 py-4">
+              {NAV_GROUPS.map((group) => (
+                <div key={group.label} className="mb-5 last:mb-0">
+                  <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                    {group.label}
+                  </div>
+                  <ul className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const active = activeTab === item.id;
+                      const Icon = item.icon;
+                      return (
+                        <li key={item.id}>
+                          <button
+                            onClick={() => handleNav(item.id)}
+                            aria-current={active ? 'page' : undefined}
+                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors motion-reduce:transition-none ${
+                              active
+                                ? 'font-semibold text-[#4E2E8C]'
+                                : 'font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                            }`}
+                            style={active ? { backgroundColor: 'rgba(78,46,140,0.08)' } : undefined}
+                          >
+                            <Icon size={18} className="shrink-0" />
+                            <span>{item.label}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
