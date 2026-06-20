@@ -213,7 +213,9 @@ function DirectoryPageContent({ profiles: initialProfiles, fetchError }: Directo
       {/* Floating A-Z Navigation for Mobile */}
       <FloatingAlphabetNav availableLetters={letters} />
 
-      <main className="w-full max-w-[1200px] mx-auto flex flex-col mt-14 md:mt-20 px-5 sm:px-8 md:px-10">
+      {/* !px on the horizontal padding so it beats the global `main { padding:0
+          !important }` mobile rule (class+!important outranks element+!important). */}
+      <main className="w-full max-w-[1200px] mx-auto flex flex-col mt-14 md:mt-20 !px-5 sm:!px-8 md:!px-10">
         <p className="text-[rgba(254,249,232,1)] text-base sm:text-lg md:text-xl lg:text-[24px] font-normal leading-[1.6]">
           Start exploring you might just reconnect with someone you forgot you
           missed.

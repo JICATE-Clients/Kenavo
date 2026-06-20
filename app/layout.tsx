@@ -93,7 +93,7 @@ export default function RootLayout({
           }}
         />
 
-        <div className="pb-20 lg:pb-0 relative z-10">
+        <div className="relative z-10">
           {children}
         </div>
         <MobileBottomNav />

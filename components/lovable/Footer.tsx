@@ -5,7 +5,7 @@ import Image from 'next/image';
 const Footer = () => {
   return (
     <footer
-      className="bg-[rgba(217,81,100,1)] flex w-full flex-col items-center justify-center py-4 sm:py-5 md:py-6"
+      className="bg-[rgba(217,81,100,1)] flex w-full flex-col items-center justify-center pt-4 sm:pt-5 md:pt-6 pb-20 lg:pb-6"
       role="contentinfo"
     >
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10">
