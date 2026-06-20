@@ -67,6 +67,20 @@ const StatsSection = () => {
         />
       </div>
 
+      {/* Soft corner glows — large radial ellipses centered on the corners so
+          only a faint quarter peeks in; the rest is clipped by overflow-hidden.
+          The gradient fades to the section's own purple, so it blends cleanly. */}
+      <div
+        aria-hidden
+        className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] md:w-[800px] md:h-[800px] rounded-full pointer-events-none z-0 opacity-70"
+        style={{ background: 'radial-gradient(50% 50% at 50% 50%, #A840D8 0%, rgba(78, 46, 140, 0) 100%)' }}
+      />
+      <div
+        aria-hidden
+        className="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] md:w-[800px] md:h-[800px] rounded-full pointer-events-none z-0 opacity-70"
+        style={{ background: 'radial-gradient(50% 50% at 50% 50%, #A840D8 0%, rgba(78, 46, 140, 0) 100%)' }}
+      />
+
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8 md:mb-10">
