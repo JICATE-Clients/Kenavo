@@ -18,6 +18,15 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code');
   const type = requestUrl.searchParams.get('type');
 
+  // Where to return the user after auth, if they came from a deep link
+  // (e.g. /directory/<slug>). Only same-site relative paths are honored to
+  // prevent open redirects.
+  const nextParam = requestUrl.searchParams.get('next');
+  const next =
+    nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
+      ? nextParam
+      : null;
+
   console.log('Auth callback triggered');
   console.log('Type:', type);
   console.log('Code:', code ? 'present' : 'missing');
@@ -76,21 +85,18 @@ export async function GET(request: NextRequest) {
 
       const userEmail = data.user?.email || '';
       const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
-      const isAdmin = adminEmails.includes(userEmail);
+      const isWhitelistAdmin = adminEmails.includes(userEmail);
 
-      if (isAdmin) {
-        console.log('✅ Admin - redirecting to admin panel');
-        return NextResponse.redirect(new URL('/admin-panel', request.url));
-      }
-
-      // Auto-provision app_users row if it doesn't exist yet
-      // This covers Gmail/Google OAuth users and anyone not created via bulk-create
-      if (data.user?.id) {
+      // Auto-provision app_users row if it doesn't exist yet, and read the
+      // role so DB-promoted admins are also routed to the dashboard.
+      // This covers Gmail/Google OAuth users and anyone not created via bulk-create.
+      let isDbAdmin = false;
+      if (!isWhitelistAdmin && data.user?.id) {
         const { data: existing } = await supabaseAdmin
           .from('app_users')
-          .select('id')
+          .select('role, status')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
         if (!existing) {
           await supabaseAdmin.from('app_users').insert({
@@ -101,10 +107,24 @@ export async function GET(request: NextRequest) {
             status: 'active',
           });
           console.log(`✅ Auto-provisioned app_users for ${userEmail}`);
+        } else {
+          isDbAdmin = existing.role === 'admin' && existing.status === 'active';
         }
       }
 
-      // Non-admin users go to directory
+      // A deep-link destination (e.g. /directory/<slug>) wins over the default
+      // landing page — the user explicitly tried to reach that page before login.
+      if (next) {
+        console.log(`✅ Redirecting to deep-link destination: ${next}`);
+        return NextResponse.redirect(new URL(next, request.url));
+      }
+
+      if (isWhitelistAdmin || isDbAdmin) {
+        console.log('✅ Admin - redirecting to admin panel');
+        return NextResponse.redirect(new URL('/admin-panel', request.url));
+      }
+
+      // Non-admin users go to the directory (a normal website page).
       console.log('✅ Regular user - redirecting to directory');
       return NextResponse.redirect(new URL('/directory', request.url));
 

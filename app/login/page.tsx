@@ -79,7 +79,9 @@ function LoginContent() {
 
     try {
       console.log('Starting Google sign-in...');
-      const { error } = await signInWithGoogle();
+      // Carry the deep-link destination (e.g. /directory/<slug>) through OAuth.
+      const redirectUrl = searchParams?.get('redirect') ?? undefined;
+      const { error } = await signInWithGoogle(redirectUrl);
 
       if (error) {
         console.error('Google sign-in error:', error);

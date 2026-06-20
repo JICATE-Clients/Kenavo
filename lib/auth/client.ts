@@ -10,17 +10,27 @@ export function createClient() {
 
 /**
  * Sign in with Google OAuth
+ *
+ * @param redirectPath Optional same-site path to return to after auth
+ *   (e.g. "/directory/jane-doe"). Carried through the OAuth round-trip via
+ *   the callback URL's `next` query param so deep links survive Google login.
  */
-export async function signInWithGoogle() {
+export async function signInWithGoogle(redirectPath?: string) {
   const supabase = createClient();
 
   // Get the current origin for redirect
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
+  // Only forward safe, same-site relative paths to avoid open redirects.
+  const next =
+    redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')
+      ? `?next=${encodeURIComponent(redirectPath)}`
+      : '';
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${origin}/auth/callback${next}`,
       // PKCE flow is handled automatically by @supabase/ssr
       // The code_verifier will be stored in cookies
     },

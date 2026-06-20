@@ -23,24 +23,13 @@ export default async function AdminPanelLayout({
     redirect('/login');
   }
 
-  // Check if user is admin
+  // Only users with the admin role may view the admin dashboard.
+  // Every other authenticated user is sent to the website, where they can
+  // browse all the public pages — they simply can't reach this dashboard.
   const admin = await isAdmin();
 
   if (!admin) {
-    // User is logged in but not an admin
-    return (
-      <div className={`${poppins.className} min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-orange-900 flex items-center justify-center p-4`}>
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 max-w-md text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Access Denied</h1>
-          <p className="text-red-200 mb-6">
-            You do not have permission to access the admin panel. This area is restricted to authorized administrators only.
-          </p>
-          <p className="text-red-300 text-sm">
-            Logged in as: <strong>{user.email}</strong>
-          </p>
-        </div>
-      </div>
-    );
+    redirect('/');
   }
 
   // User is authenticated and is an admin - render the admin panel in Poppins

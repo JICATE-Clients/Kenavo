@@ -29,8 +29,10 @@ const DirectorySectionV2 = () => {
         />
       </div>
 
-      {/* Bottom horizontal gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none z-20"></div>
+      {/* Fade the dark base of the mountain image into the section's purple so
+          it doesn't form a hard horizontal band below the content. Sits above
+          the mountain (z-0) but below the content (z-10). */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 md:h-28 bg-gradient-to-t from-[rgba(78,46,140,1)] via-[rgba(78,46,140,0.6)] to-transparent pointer-events-none z-[1]"></div>
 
       {/* Main Content Grid - FILLS the frame */}
       <div className="relative z-10 h-full grid grid-cols-1 md:grid-cols-2 w-full gap-0 m-0 p-0">

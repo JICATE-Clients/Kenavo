@@ -3,11 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Image, Mail, Plus, Info, Star, Music, X } from 'lucide-react';
+import { Home, Users, Image, Mail, Plus, Info, Star, Music, X, ChevronDown } from 'lucide-react';
 
 const MobileBottomNav = () => {
   const pathname = usePathname();
   const [showMenu, setShowMenu] = useState(false);
+  // "Echoes & Memories" is a collapsible parent (mirrors the desktop dropdown):
+  // collapsed by default, tapping it reveals its sub-pages — it never navigates
+  // on its own, so it can't hit the non-existent /echoes-and-memories page (404).
+  const [showMemories, setShowMemories] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -79,7 +83,11 @@ const MobileBottomNav = () => {
       {/* Separate Plus Button Container */}
       <div className="fixed bottom-2 right-3 lg:hidden z-50">
         <button
-          onClick={() => setShowMenu(!showMenu)}
+          onClick={() => {
+            const next = !showMenu;
+            setShowMenu(next);
+            if (!next) setShowMemories(false);
+          }}
           className="relative flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[rgba(217,81,100,1)] to-[rgba(217,81,100,0.85)] shadow-md hover:shadow-lg transition-all duration-300 active:scale-95 border border-white/20"
           aria-label="More options"
         >
@@ -101,7 +109,7 @@ const MobileBottomNav = () => {
             className="absolute bottom-12 right-3 bg-[rgba(78,46,140,0.98)] backdrop-blur-lg rounded-xl shadow-xl border border-white/15 overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col p-1.5 min-w-[140px]">
+            <div className="flex flex-col p-1.5 min-w-[180px]">
               <Link
                 href="/about"
                 onClick={() => setShowMenu(false)}
@@ -118,14 +126,32 @@ const MobileBottomNav = () => {
                 <Star size={14} className="text-white/90" />
                 <span className="text-xs font-medium text-white">Reunion &apos;25</span>
               </Link>
-              <Link
-                href="/echoes-and-memories/rewind"
-                onClick={() => setShowMenu(false)}
-                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/10 rounded-lg transition-all duration-200 active:scale-95"
+
+              {/* Echoes & Memories — collapsible section parent (mirrors the
+                  desktop dropdown). Tapping toggles its sub-pages; it never
+                  navigates itself. Add more sub-pages inside as the section grows. */}
+              <button
+                type="button"
+                onClick={() => setShowMemories((o) => !o)}
+                aria-expanded={showMemories}
+                className="mt-0.5 flex w-full items-center gap-2.5 px-3 py-2.5 hover:bg-white/10 rounded-lg transition-all duration-200 active:scale-95"
               >
                 <Music size={14} className="text-white/90" />
-                <span className="text-xs font-medium text-white">Rewind Songs</span>
-              </Link>
+                <span className="flex-1 text-left text-xs font-medium text-white">Echoes &amp; Memories</span>
+                <ChevronDown
+                  size={14}
+                  className={`text-white/70 transition-transform duration-200 ${showMemories ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {showMemories && (
+                <Link
+                  href="/echoes-and-memories/rewind"
+                  onClick={() => setShowMenu(false)}
+                  className="ml-6 flex items-center gap-2.5 border-l border-white/15 px-3 py-2.5 hover:bg-white/10 rounded-lg transition-all duration-200 active:scale-95 animate-in fade-in slide-in-from-top-1 duration-200"
+                >
+                  <span className="text-xs font-medium text-white">Rewind: The Songs We Grew Up On</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>

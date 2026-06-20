@@ -77,9 +77,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine role for redirect hint
+    // Determine role for redirect hint.
+    // A user counts as admin if their email is in the ADMIN_EMAILS whitelist
+    // OR their app_users row has role === 'admin' and status === 'active'.
+    // This must match lib/auth/server.ts → isAdmin(), otherwise DB-promoted
+    // admins would be redirected to the website instead of the dashboard.
     const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
-    const isAdmin = adminEmails.includes(data.user?.email || '');
+    let isAdmin = adminEmails.includes(data.user?.email || '');
+
+    if (!isAdmin && data.user?.id) {
+      try {
+        const { data: appUser } = await supabaseAdmin
+          .from('app_users')
+          .select('role, status')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        isAdmin = appUser?.role === 'admin' && appUser?.status === 'active';
+      } catch (roleErr: any) {
+        // Non-fatal: fall back to non-admin redirect if the lookup fails.
+        console.warn(`⚠️ admin role lookup failed for ${data.user.email}:`, roleErr?.message ?? roleErr);
+      }
+    }
 
     // Auto-provision app_users row for email/password logins (non-admin).
     // Best-effort: a failure here must NOT fail the login response, because

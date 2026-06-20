@@ -248,7 +248,9 @@
     .content-section,
     section {
       padding: 12px 8px !important;
-      margin-bottom: 8px !important;
+      /* No bottom margin: an 8px gap here exposed the purple <main> background
+         between sections, reading as a stray purple band under each section. */
+      margin-bottom: 0 !important;
     }
 
     p {
@@ -372,7 +374,7 @@
     .content-section,
     section {
       padding: 20px 12px !important;
-      margin-bottom: 25px !important;
+      margin-bottom: 0 !important;
     }
 
     p {
@@ -395,7 +397,7 @@
     .content-section,
     section {
       padding: 20px 15px !important;
-      margin-bottom: 25px !important;
+      margin-bottom: 0 !important;
     }
 
     p {
@@ -416,8 +418,10 @@
   }
 
   /* Global content tightening across all viewports */
+  /* No top margin between sections: any gap exposes the purple <main>
+     background, reading as a stray purple band between sections/footer. */
   section + section {
-    margin-top: 8px !important;
+    margin-top: 0 !important;
   }
 
   .wrapper,
@@ -577,6 +581,18 @@ button.bug-reporter-floating-btn {
 button.bug-reporter-floating-btn svg {
   width: 1.15rem !important;
   height: 1.15rem !important;
+}
+/* On mobile the bottom nav sits at the very bottom-right (the rose "+" button),
+   so the SDK's default bottom-right bug button overlaps it. Lift the button up
+   off the nav and move it to the left edge (left: 0.75rem, matching the nav's
+   left-3). The SDK pins position with inline styles, so !important wins. */
+@media (max-width: 1023px) {
+  button.bug-reporter-floating-btn {
+    bottom: 4rem !important;
+    left: 0.75rem !important;
+    top: auto !important;
+    right: auto !important;
+  }
 }
 
 /* Soft pulsing glow that makes the AI chat launcher look "shiny". */

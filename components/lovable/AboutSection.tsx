@@ -7,11 +7,6 @@ const AboutSection = () => {
       className="relative w-full bg-[rgba(78,46,140,1)] py-8 sm:py-10 md:py-12 lg:py-14"
       aria-labelledby="about-heading"
     >
-      {/* Top white gradient fade with shimmer */}
-      <div className="absolute top-0 left-0 right-0 h-20 sm:h-24 md:h-32 bg-gradient-to-b from-white/40 via-white/20 to-transparent pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
-      {/* Bottom white gradient fade with shimmer */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-24 md:h-32 bg-gradient-to-t from-white/40 via-white/20 to-transparent pointer-events-none animate-pulse" style={{ animationDuration: '4s', animationDelay: '2s' }} />
-
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-5 sm:gap-6 md:gap-8 lg:gap-10 items-center">

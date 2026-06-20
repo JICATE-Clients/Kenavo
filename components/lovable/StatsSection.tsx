@@ -55,7 +55,7 @@ const StatsSection = () => {
 
   return (
     <section
-      className="relative w-full bg-[rgba(64,34,120,1)] py-8 sm:py-10 md:py-12 lg:py-14 overflow-hidden"
+      className="relative w-full bg-[rgba(78,46,140,1)] py-8 sm:py-10 md:py-12 lg:py-14 overflow-hidden"
       aria-labelledby="stats-heading"
     >
       {/* Background Image */}

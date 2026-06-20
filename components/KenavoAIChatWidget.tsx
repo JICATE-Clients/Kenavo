@@ -195,7 +195,7 @@ export default function KenavoAIChatWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="kenavo-shine fixed bottom-28 right-4 lg:bottom-24 lg:right-6 z-50 transition-transform duration-300 hover:scale-[1.08] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4E2E8C]/50 rounded-full"
+          className="kenavo-shine fixed bottom-28 left-3 lg:bottom-24 lg:left-auto lg:right-6 z-50 transition-transform duration-300 hover:scale-[1.08] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4E2E8C]/50 rounded-full"
           aria-label="Open Kenavo AI Assistant"
         >
           <svg
