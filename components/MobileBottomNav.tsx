@@ -33,8 +33,15 @@ const MobileBottomNav = () => {
     return pathname.startsWith(href);
   };
 
-  // Don't render navigation during SSR to prevent hydration mismatch
-  if (!isMounted) {
+  // This floating bar + FAB are the PUBLIC site's navigation. The admin panel
+  // ships its own chrome (AdminShell's sidebar + topbar hamburger), so the
+  // public nav must never bleed into it — otherwise mobile admins see website
+  // links (Home/Directory/…) layered over the dashboard.
+  const onAdminPanel = pathname.startsWith('/admin-panel');
+
+  // Don't render navigation during SSR to prevent hydration mismatch,
+  // and never render it inside the admin panel.
+  if (!isMounted || onAdminPanel) {
     return null;
   }
 
