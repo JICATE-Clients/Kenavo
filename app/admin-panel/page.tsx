@@ -12,10 +12,11 @@ import UserManagementTab from '@/components/admin/UserManagementTab';
 import AIDocumentsTab from '@/components/admin/AIDocumentsTab';
 import ReunionPageEditorTab from '@/components/admin/ReunionPageEditorTab';
 import RewindPageEditorTab from '@/components/admin/RewindPageEditorTab';
+import OurTreasurePageEditorTab from '@/components/admin/OurTreasurePageEditorTab';
 import AdminShell from '@/components/admin/AdminShell';
 import type { Profile } from '@/lib/types/database';
 
-type TabType = 'manage' | 'bulkUpdate' | 'single' | 'gallery' | 'contact' | 'users' | 'ai-documents' | 'auth-accounts' | 'reunion' | 'rewind';
+type TabType = 'manage' | 'bulkUpdate' | 'single' | 'gallery' | 'contact' | 'users' | 'ai-documents' | 'auth-accounts' | 'reunion' | 'rewind' | 'our-treasure';
 
 // Helper function to parse CSV line (handles quoted values with commas)
 function parseCSVLine(line: string): string[] {
@@ -63,7 +64,7 @@ export default function AdminPanel() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab') as TabType;
-      if (tab && ['manage', 'bulkUpdate', 'single', 'gallery', 'contact', 'users', 'ai-documents', 'auth-accounts', 'reunion', 'rewind'].includes(tab)) {
+      if (tab && ['manage', 'bulkUpdate', 'single', 'gallery', 'contact', 'users', 'ai-documents', 'auth-accounts', 'reunion', 'rewind', 'our-treasure'].includes(tab)) {
         return tab;
       }
     }
@@ -146,6 +147,7 @@ export default function AdminPanel() {
       {activeTab === 'auth-accounts' && <AuthAccountsTab />}
       {activeTab === 'reunion' && <ReunionPageEditorTab />}
       {activeTab === 'rewind' && <RewindPageEditorTab />}
+      {activeTab === 'our-treasure' && <OurTreasurePageEditorTab />}
     </AdminShell>
   );
 }

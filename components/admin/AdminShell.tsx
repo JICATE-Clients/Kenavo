@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   FileText,
   Music,
+  Heart,
   LogOut,
   MoreHorizontal,
   X,
@@ -58,6 +59,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'reunion', label: 'Reunion Page', icon: FileText },
       { id: 'rewind', label: 'Rewind Songs', icon: Music },
+      { id: 'our-treasure', label: 'Our Treasure', icon: Heart },
     ],
   },
   {

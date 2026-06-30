@@ -5,6 +5,7 @@ import { protectAdminRoute } from '@/lib/auth/api-protection';
 import { getUser } from '@/lib/auth/server';
 import { DEFAULT_REUNION_CONTENT, REUNION_SLUG } from '@/lib/reunion-content';
 import { DEFAULT_REWIND_CONTENT, REWIND_SLUG } from '@/lib/rewind-content';
+import { DEFAULT_OUR_TREASURE_CONTENT, OUR_TREASURE_SLUG } from '@/lib/treasure-content';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,7 @@ export const dynamic = 'force-dynamic';
 const SLUG_PATHS: Record<string, string> = {
   [REUNION_SLUG]: '/reunion-2025',
   [REWIND_SLUG]: '/echoes-and-memories/rewind',
+  [OUR_TREASURE_SLUG]: '/our-treasure',
 };
 
 // Canonical default content per slug — returned by GET when no row exists yet,
@@ -19,6 +21,7 @@ const SLUG_PATHS: Record<string, string> = {
 const DEFAULT_CONTENT: Record<string, unknown> = {
   [REUNION_SLUG]: DEFAULT_REUNION_CONTENT,
   [REWIND_SLUG]: DEFAULT_REWIND_CONTENT,
+  [OUR_TREASURE_SLUG]: DEFAULT_OUR_TREASURE_CONTENT,
 };
 
 /**

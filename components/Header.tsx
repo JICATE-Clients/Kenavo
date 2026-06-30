@@ -2,7 +2,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Heart } from 'lucide-react';
+
+// Coral brand accent — the same colour the Reunion/Treasure pages use. The
+// small filled heart marks the two "special" memory pages in the nav.
+const HEART = 'rgba(217,81,100,1)';
+const FavHeart = ({ size = 12 }: { size?: number }) => (
+  <Heart size={size} aria-hidden className="shrink-0" style={{ color: HEART, fill: HEART }} />
+);
 
 /**
  * Sub-pages that live under the "Echoes & Memories" section. This is the one
@@ -121,8 +128,13 @@ const Header = () => {
           <Link href="/gallery" className="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
             GALLERY
           </Link>
-          <Link href="/reunion-2025" className="hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
+          <Link href="/reunion-2025" className="inline-flex items-center gap-1.5 hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
+            <FavHeart />
             REUNION &apos;25
+          </Link>
+          <Link href="/our-treasure" className="inline-flex items-center gap-1.5 hover:text-gray-600 transition-colors whitespace-nowrap text-[13px] lg:text-sm tracking-wide">
+            <FavHeart />
+            OUR TREASURE
           </Link>
           <MemoriesNav
             label={'ECHOES & MEMORIES'}
@@ -144,8 +156,13 @@ const Header = () => {
           <Link href="/gallery" className="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
             GALLERY
           </Link>
-          <Link href="/reunion-2025" className="hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
+          <Link href="/reunion-2025" className="inline-flex items-center gap-1 hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
+            <FavHeart size={11} />
             REUNION
+          </Link>
+          <Link href="/our-treasure" className="inline-flex items-center gap-1 hover:text-gray-600 transition-colors whitespace-nowrap text-xs tracking-wide">
+            <FavHeart size={11} />
+            TREASURE
           </Link>
           <MemoriesNav
             label="MEMORIES"

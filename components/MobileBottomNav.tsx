@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Image, Mail, Plus, Info, Star, Music, X, ChevronDown } from 'lucide-react';
+import { Home, Users, Image, Mail, Plus, Info, Heart, Music, X, ChevronDown } from 'lucide-react';
+
+// Coral brand accent — marks the two "special" memory pages with a filled heart.
+const HEART = 'rgba(217,81,100,1)';
 
 const MobileBottomNav = () => {
   const pathname = usePathname();
@@ -130,8 +133,16 @@ const MobileBottomNav = () => {
                 onClick={() => setShowMenu(false)}
                 className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/10 rounded-lg transition-all duration-200 active:scale-95"
               >
-                <Star size={14} className="text-white/90" />
+                <Heart size={14} style={{ color: HEART, fill: HEART }} />
                 <span className="text-xs font-medium text-white">Reunion &apos;25</span>
+              </Link>
+              <Link
+                href="/our-treasure"
+                onClick={() => setShowMenu(false)}
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/10 rounded-lg transition-all duration-200 active:scale-95"
+              >
+                <Heart size={14} style={{ color: HEART, fill: HEART }} />
+                <span className="text-xs font-medium text-white">Our Treasure</span>
               </Link>
 
               {/* Echoes & Memories — collapsible section parent (mirrors the
