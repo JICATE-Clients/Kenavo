@@ -1,18 +1,49 @@
 // API functions for fetching profile data from Supabase
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabase } from '../supabase'
 import type { Profile, ProfileWithGallery, ProfileWithAnswers, ProfileQA } from '../types/database'
 import { createSlug, slugMatchesName } from '../utils/slug'
 
 /**
- * Fetch all profiles from the database
- * @returns Array of all alumni profiles
+ * Privacy split for the profiles table.
+ *
+ * PUBLIC_PROFILE_COLUMNS: safe for anyone, read with the public anon client.
+ * CONTACT_PROFILE_COLUMNS: home address and contact details. Read ONLY through a
+ * signed-in classmate's own session client (lib/auth/server createClient), never
+ * with the anon client. The lock migration
+ * (supabase/migrations/*_lock_profile_contact_columns.sql) removes anon's access
+ * to these columns, so an anon query that names them, or uses '*', will fail.
+ */
+export const PUBLIC_PROFILE_COLUMNS =
+  'id, name, profile_image_url, year_graduated, current_job, designation_organisation, bio, nicknames, created_at, updated_at' as const
+export const CONTACT_PROFILE_COLUMNS = 'location, email, phone, linkedin_url' as const
+
+const CONTACT_HIDDEN = { location: null, email: null, phone: null, linkedin_url: null } as const
+
+/**
+ * Fetch all profiles for the directory list.
+ * @param viewer - the signed-in classmate's session client, or null for a stranger.
+ *   Strangers get location: null and it is never fetched.
  */
 export type ProfileCard = Pick<Profile, 'id' | 'name' | 'profile_image_url' | 'updated_at' | 'location' | 'current_job' | 'designation_organisation' | 'year_graduated' | 'nicknames'>
 
-export async function getAllProfiles(): Promise<ProfileCard[]> {
+export async function getAllProfiles(viewer: SupabaseClient | null = null): Promise<ProfileCard[]> {
+  if (viewer) {
+    const { data, error } = await viewer
+      .from('profiles')
+      .select('id, name, profile_image_url, updated_at, location, current_job, designation_organisation, year_graduated, nicknames')
+      .order('name')
+
+    if (error) {
+      console.error('Error fetching profiles:', error)
+      throw error
+    }
+    return data || []
+  }
+
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, name, profile_image_url, updated_at, location, current_job, designation_organisation, year_graduated, nicknames')
+    .select('id, name, profile_image_url, updated_at, current_job, designation_organisation, year_graduated, nicknames')
     .order('name')
 
   if (error) {
@@ -20,7 +51,7 @@ export async function getAllProfiles(): Promise<ProfileCard[]> {
     throw error
   }
 
-  return data || []
+  return (data || []).map((p) => ({ ...p, location: null }))
 }
 
 /**
@@ -31,7 +62,7 @@ export async function getAllProfiles(): Promise<ProfileCard[]> {
 export async function getProfilesByYear(year: string): Promise<Profile[]> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PUBLIC_PROFILE_COLUMNS)
     .eq('year_graduated', year)
     .order('name')
 
@@ -40,7 +71,7 @@ export async function getProfilesByYear(year: string): Promise<Profile[]> {
     throw error
   }
 
-  return data || []
+  return (data || []).map((p) => ({ ...p, ...CONTACT_HIDDEN }) as Profile)
 }
 
 /**
@@ -52,7 +83,7 @@ export async function getProfileById(id: number): Promise<ProfileWithGallery | n
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      *,
+      ${PUBLIC_PROFILE_COLUMNS},
       gallery_images (
         id,
         image_url,
@@ -70,19 +101,20 @@ export async function getProfileById(id: number): Promise<ProfileWithGallery | n
     throw error
   }
 
-  return data as ProfileWithGallery
+  return { ...data, ...CONTACT_HIDDEN } as unknown as ProfileWithGallery
 }
 
 /**
- * Search profiles by name or location
+ * Search profiles by name (public anon client, so location is not searchable:
+ * strangers must not be able to probe addresses)
  * @param searchTerm - Search query
  * @returns Array of matching profiles
  */
 export async function searchProfiles(searchTerm: string): Promise<Profile[]> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
-    .or(`name.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%`)
+    .select(PUBLIC_PROFILE_COLUMNS)
+    .ilike('name', `%${searchTerm}%`)
     .order('name')
 
   if (error) {
@@ -90,7 +122,7 @@ export async function searchProfiles(searchTerm: string): Promise<Profile[]> {
     throw error
   }
 
-  return data || []
+  return (data || []).map((p) => ({ ...p, ...CONTACT_HIDDEN }) as Profile)
 }
 
 /**
@@ -100,7 +132,7 @@ export async function searchProfiles(searchTerm: string): Promise<Profile[]> {
 export async function getProfilesCount(): Promise<number> {
   const { count, error } = await supabase
     .from('profiles')
-    .select('*', { count: 'exact', head: true })
+    .select('id', { count: 'exact', head: true })
 
   if (error) {
     console.error('Error counting profiles:', error)
@@ -174,12 +206,22 @@ export async function getProfileQA(profileId: number): Promise<ProfileQA[]> {
 /**
  * Fetch profile by slug (URL-friendly version of name)
  * @param slug - URL slug (e.g., "david-a", "john-doe", "a-s-syed-ahamed-khan")
+ * @param viewer - the signed-in classmate's session client, or null for a stranger.
+ *   Contact columns are fetched only through `viewer`; strangers get them as null.
  * @returns Profile with Q&A responses, or null if not found
  *
  * IMPROVED: Handles special characters properly by using fuzzy matching
  * with slug comparison instead of exact name matching
  */
-export async function getProfileBySlug(slug: string): Promise<ProfileWithAnswers | null> {
+export async function getProfileBySlug(
+  slug: string,
+  viewer: SupabaseClient | null = null
+): Promise<ProfileWithAnswers | null> {
+  const client = viewer ?? supabase
+  const columns = viewer
+    ? `${PUBLIC_PROFILE_COLUMNS}, ${CONTACT_PROFILE_COLUMNS}`
+    : PUBLIC_PROFILE_COLUMNS
+
   // Strategy: Search by words in the slug to handle special characters
   // Example: "a-s-syed-ahamed-khan" searches for profiles containing these words
   // Then use slugMatchesName() to find the exact match
@@ -190,29 +232,34 @@ export async function getProfileBySlug(slug: string): Promise<ProfileWithAnswers
   // Build OR query for partial matches
   // This finds all profiles that contain ANY of the search terms
   const orQuery = searchTerms.map(term => `name.ilike.%${term}%`).join(',')
-  let { data: profiles, error: profileError } = await supabase
+  const { data: found, error: profileError } = await client
     .from('profiles')
-    .select('*')
+    .select(columns)
     .or(orQuery)
+  let profiles = (found || []).map((p) =>
+    (viewer ? p : { ...(p as object), ...CONTACT_HIDDEN }) as unknown as Profile
+  )
 
   if (profileError) {
     console.error('Error fetching profile by slug:', profileError)
     throw profileError
   }
 
-  if (!profiles || profiles.length === 0) {
+  if (profiles.length === 0) {
     // Fallback: ilike search can miss names with special characters (e.g., "R.Rangaraj")
     // because the slug strips characters the DB name retains, creating a mismatch.
     // Fall back to fetching all profiles and matching by slug comparison.
-    const { data: allProfiles, error: fallbackError } = await supabase
+    const { data: allProfiles, error: fallbackError } = await client
       .from('profiles')
-      .select('*')
+      .select(columns)
 
     if (fallbackError || !allProfiles || allProfiles.length === 0) {
       return null
     }
 
-    const fallbackMatch = allProfiles.filter(p => slugMatchesName(slug, p.name))
+    const fallbackMatch = allProfiles
+      .map((p) => (viewer ? p : { ...(p as object), ...CONTACT_HIDDEN }) as unknown as Profile)
+      .filter(p => slugMatchesName(slug, p.name))
     if (fallbackMatch.length === 0) {
       console.warn(`No slug match found for: ${slug}`)
       return null

@@ -6,19 +6,29 @@ import Footer from '@/components/Footer';
 import ProfileHero from '@/components/ProfileHero';
 import QuestionAnswer from '@/components/QuestionAnswer';
 import { getProfileBySlug } from '@/lib/api/profiles';
-import { getUser } from '@/lib/auth/server';
+import { createClient } from '@/lib/auth/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DirectoryIndividualPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: slug } = await params;
 
-  const { user } = await getUser();
-  const isAuthenticated = !!user;
+  // Contact details are read only through a signed-in classmate's own session.
+  // If the check fails, treat the visitor as a stranger.
+  let viewer: SupabaseClient | null = null;
+  try {
+    const sessionClient = await createClient();
+    const { data: { user } } = await sessionClient.auth.getUser();
+    if (user) viewer = sessionClient;
+  } catch (err) {
+    console.error('Profile auth check failed, hiding contact details:', err);
+  }
+  const isAuthenticated = !!viewer;
 
   let profile;
   try {
-    profile = await getProfileBySlug(slug);
+    profile = await getProfileBySlug(slug, viewer);
   } catch (error) {
     console.error('Error fetching profile:', error);
     notFound();

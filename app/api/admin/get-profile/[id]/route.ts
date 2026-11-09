@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { protectAdminRoute } from '@/lib/auth/api-protection';
 
 export const dynamic = 'force-dynamic'; // Disable static optimization
@@ -22,7 +22,7 @@ export async function GET(
     }
 
     // Fetch profile data
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('id', profileId)
@@ -38,7 +38,7 @@ export async function GET(
     }
 
     // Fetch Q&A answers for this profile
-    const { data: qaData, error: qaError } = await supabase
+    const { data: qaData, error: qaError } = await supabaseAdmin
       .from('profile_answers')
       .select(`
         question_id,
@@ -65,7 +65,7 @@ export async function GET(
     })) || [];
 
     // Fetch all questions for the form (in case some aren't answered yet)
-    const { data: allQuestions } = await supabase
+    const { data: allQuestions } = await supabaseAdmin
       .from('profile_questions')
       .select('id, question_text, order_index')
       .eq('is_active', true)

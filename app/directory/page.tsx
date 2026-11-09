@@ -1,6 +1,7 @@
 import DirectoryClient from './DirectoryClient';
 import { getAllProfiles } from '@/lib/api/profiles';
-import { getUser } from '@/lib/auth/server';
+import { createClient } from '@/lib/auth/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Rendered per request: what a visitor receives depends on whether they are signed in.
 export const dynamic = 'force-dynamic';
@@ -9,22 +10,20 @@ export default async function DirectoryPage() {
   let profiles: Awaited<ReturnType<typeof getAllProfiles>> = [];
   let fetchError: string | null = null;
 
-  // Same check the profile page (ProfileHero) and the AI chat use to hide location:
-  // only signed-in classmates get it. If the check fails, treat the visitor as a stranger.
-  let isAuthenticated = false;
+  // Only signed-in classmates get location, and it is read through THEIR session
+  // (not the public anon key). Strangers never fetch it. If the check fails, treat
+  // the visitor as a stranger.
+  let viewer: SupabaseClient | null = null;
   try {
-    const { user } = await getUser();
-    isAuthenticated = !!user;
+    const sessionClient = await createClient();
+    const { data: { user } } = await sessionClient.auth.getUser();
+    if (user) viewer = sessionClient;
   } catch (err) {
     console.error('Directory auth check failed, hiding locations:', err);
   }
 
   try {
-    const allProfiles = await getAllProfiles();
-    // Strip location on the server so it never reaches a stranger's browser.
-    profiles = isAuthenticated
-      ? allProfiles
-      : allProfiles.map((p) => ({ ...p, location: null }));
+    profiles = await getAllProfiles(viewer);
   } catch (err: any) {
     if (err?.name === 'AbortError' || err?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
       return (
