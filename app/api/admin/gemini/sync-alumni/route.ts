@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { protectAdminRoute } from '@/lib/auth/api-protection';
 
 /**
  * POST /api/admin/gemini/sync-alumni — SWITCHED OFF (410 Gone)
@@ -14,5 +15,9 @@ const GONE_MESSAGE =
   "Alumni sync to Google Gemini is switched off for privacy: it sent classmates' emails and phone numbers to Google. Contact the site admin if you need it.";
 
 export async function POST() {
+  // Admins only, as before: strangers get the usual 401/403, not this explanation.
+  const authCheck = await protectAdminRoute();
+  if (authCheck) return authCheck;
+
   return NextResponse.json({ error: GONE_MESSAGE }, { status: 410 });
 }
