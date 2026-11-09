@@ -4,7 +4,14 @@ import { chatWithContext } from '@/lib/gemini/service';
 import { buildSmartResponse } from '@/lib/alumni/smartSearch';
 import type { ChatRequest, ChatMessage } from '@/lib/types/database';
 import { getUser } from '@/lib/auth/server';
+import { askJicateDoor, jicateDoorEnabled } from '@/lib/jicate/door';
 import { v4 as uuidv4 } from 'uuid';
+
+// The JICATE engine is polled for up to 60 s before falling back to Gemini.
+export const maxDuration = 120;
+
+/** How many earlier turns the JICATE engine sees (Gemini keeps the full history as today). */
+const DOOR_HISTORY_TURNS = 8;
 
 type ProfileRow = {
   name: string;
@@ -15,7 +22,7 @@ type ProfileRow = {
   nicknames: string | null;
 };
 
-function buildAlumniContext(profiles: ProfileRow[]): string {
+function buildAlumniLines(profiles: ProfileRow[]): string[] {
   return profiles.map(p => {
     const parts: string[] = [p.name];
     if (p.current_job && p.designation_organisation) parts.push(`${p.current_job} at ${p.designation_organisation}`);
@@ -25,7 +32,11 @@ function buildAlumniContext(profiles: ProfileRow[]): string {
     if (p.year_graduated) parts.push(`Class of ${p.year_graduated}`);
     if (p.nicknames) parts.push(`aka ${p.nicknames}`);
     return parts.join(' | ');
-  }).join('\n');
+  });
+}
+
+function buildAlumniContext(profiles: ProfileRow[]): string {
+  return buildAlumniLines(profiles).join('\n');
 }
 
 /** Returns true when the error is a permanent API-level block (not transient). */
@@ -45,8 +56,11 @@ function isPermanentBlock(err: any): boolean {
  *
  * Flow:
  *  1. Fetch all alumni profiles from Supabase.
- *  2. Try Gemini AI with alumni context injected into the system prompt.
- *  3. If Gemini returns a permanent 403 (project blocked / key invalid),
+ *  2. When AI_PROVIDER=jicate (and AI_DOOR_URL/AI_DOOR_KEY are set), ask the
+ *     JICATE AI engine (task kenavo.alumni_chat) with the whole directory.
+ *     If it is off, refuses, fails or gives no answer in 60 s, use step 3.
+ *  3. Try Gemini AI with alumni context injected into the system prompt.
+ *     If Gemini returns a permanent 403 (project blocked / key invalid),
  *     fall back to the smart keyword-search response — zero AI needed.
  *  4. Save both turns to chat history and return the response.
  */
@@ -88,26 +102,40 @@ export async function POST(request: NextRequest) {
       parts: [{ text: r.message_text }],
     }));
 
-    // ── 3. Get AI response (Gemini first, smart search fallback) ──────────
-    let responseText: string;
+    // ── 3. Get AI response (JICATE when switched on, then Gemini, then smart search) ──
+    let responseText: string | null = null;
 
-    try {
-      const alumniContext = buildAlumniContext(safeProfiles);
-      const aiResult = await chatWithContext(alumniContext, message, history);
-      responseText = aiResult.text;
-    } catch (geminiErr: any) {
-      if (isPermanentBlock(geminiErr)) {
-        // Gemini project is blocked — use smart keyword search instead
-        responseText = buildSmartResponse(message, safeProfiles);
-      } else if ((geminiErr?.status ?? 0) === 429) {
-        return NextResponse.json(
-          { error: "I'm a little busy right now — too many people asking at once! Please try again in a minute." },
-          { status: 429 }
-        );
-      } else {
-        // Transient error — still fall back gracefully
-        console.error('Gemini error, falling back to smart search:', geminiErr?.message);
-        responseText = buildSmartResponse(message, safeProfiles);
+    if (jicateDoorEnabled()) {
+      responseText = await askJicateDoor({
+        question: message,
+        alumni: buildAlumniLines(safeProfiles),
+        history: history.slice(-DOOR_HISTORY_TURNS).map(h => ({
+          role: h.role === 'model' ? 'assistant' : 'user',
+          text: h.parts.map(p => p.text).join('\n'),
+        })),
+        viewer: isAuthenticated ? 'member' : 'guest',
+      });
+    }
+
+    if (responseText === null) {
+      try {
+        const alumniContext = buildAlumniContext(safeProfiles);
+        const aiResult = await chatWithContext(alumniContext, message, history);
+        responseText = aiResult.text;
+      } catch (geminiErr: any) {
+        if (isPermanentBlock(geminiErr)) {
+          // Gemini project is blocked — use smart keyword search instead
+          responseText = buildSmartResponse(message, safeProfiles);
+        } else if ((geminiErr?.status ?? 0) === 429) {
+          return NextResponse.json(
+            { error: "I'm a little busy right now — too many people asking at once! Please try again in a minute." },
+            { status: 429 }
+          );
+        } else {
+          // Transient error — still fall back gracefully
+          console.error('Gemini error, falling back to smart search:', geminiErr?.message);
+          responseText = buildSmartResponse(message, safeProfiles);
+        }
       }
     }
 
