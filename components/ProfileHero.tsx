@@ -179,10 +179,11 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
               </div>
             )}
 
-            {/* Anon CTA — visible only to unauthenticated visitors who have at
-                least one gated field. The dashed border distinguishes a "locked"
+            {/* Anon CTA — visible to every unauthenticated visitor. Contact fields
+                are no longer fetched for strangers (always null here), so the CTA
+                cannot depend on them. The dashed border distinguishes a "locked"
                 section from the filled information cards above. */}
-            {!isAuthenticated && (location || email || phone) && (
+            {!isAuthenticated && (
               <div className="bg-[rgba(255,255,255,0.03)] backdrop-blur-sm rounded-lg p-4 sm:p-5 md:p-6 lg:p-7 xl:p-5 border border-dashed border-[rgba(217,81,100,0.4)]">
                 <div className="text-[rgba(217,81,100,1)] text-xs sm:text-sm md:text-base lg:text-[17px] font-medium uppercase tracking-wide mb-2 sm:mb-2.5 md:mb-3">
                   Contact &amp; Location
