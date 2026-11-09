@@ -8,7 +8,6 @@ export default function AIDocumentsTab() {
   const [documents, setDocuments] = useState<GeminiDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -106,33 +105,6 @@ export default function AIDocumentsTab() {
     }
   };
 
-  const handleSyncAlumni = async () => {
-    setSyncing(true);
-    setMessage(null);
-
-    try {
-      const response = await fetch('/api/admin/gemini/sync-alumni', {
-        method: 'POST',
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage({
-          type: 'success',
-          text: `Alumni sync started! ${data.profileCount} profiles will be uploaded.`,
-        });
-        fetchDocuments();
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Sync failed' });
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Sync failed. Please try again.' });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this document?')) {
       return;
@@ -223,23 +195,13 @@ export default function AIDocumentsTab() {
           AI Documents
         </h2>
         <div className="flex gap-3">
-          <button
-            onClick={handleSyncAlumni}
-            disabled={syncing}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#4E2E8C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d2370] disabled:opacity-50 transition-colors"
+          {/* "Sync Alumni" was removed: it sent classmates' emails and phones to Google Gemini. */}
+          <span
+            className="self-center text-xs text-gray-500"
+            title="Alumni sync to Google is switched off for privacy"
           >
-            {syncing ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Syncing...
-              </>
-            ) : (
-              <>
-                <RefreshCw size={16} />
-                Sync Alumni
-              </>
-            )}
-          </button>
+            Alumni sync is switched off for privacy.
+          </span>
           <button
             onClick={() => setUploadModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-lg bg-[#D95164] hover:bg-[#C94154] text-white px-4 py-2 text-sm font-medium transition-colors"
